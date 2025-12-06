@@ -87,7 +87,6 @@
         return alertText
     }
     function displayNewAppointmentButton() {
-        console.log(patientData.next_appointment_created)
         if(patientData.attended === null) {
             if(patientData.call_status === "appointment_cancelled" && !patientData.next_appointment_created) return true
         } else if (patientData.attended === false && !patientData.next_appointment_created) return true
@@ -183,8 +182,8 @@
                     items={callStatuses}
                     allowDeselect={true}
                     value={patientData.call_status}
-                    required={patientData.attended !== null}
-                    disabled={patientData.attended !== null}
+                    required={patientData.attended === null && patientData.call_status !== "appointment_cancelled"}
+                    disabled={patientData.attended === true || patientData.attended === false || patientData.call_status === "appointment_cancelled"}
                 >
                     <Select.Trigger
                         class="mt-4 h-input rounded-9px border-border-input bg-orange-300 data-placeholder:text-orange-900 data-placeholder:font-bold inline-flex w-full 

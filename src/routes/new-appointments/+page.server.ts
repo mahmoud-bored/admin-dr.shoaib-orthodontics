@@ -50,10 +50,10 @@ export const actions = {
             .rpc('update_patient_appointment_form_submission', {
                 current_patient_id: processedData.patient_id,
                 current_form_id: processedData.form_id,
-                current_appointment_id: processedData.appointment_id as number,
                 new_full_name: processedData.full_name,
                 new_phone_number: processedData.phone_number,
                 new_status: processedData.call_status,
+                current_appointment_id: processedData.appointment_id as number,
                 new_appointment_date: processedData.call_status === "appointment_booked" ? new_appointment_full_date as string : null as any,
             })
         if(error) console.log(error)
