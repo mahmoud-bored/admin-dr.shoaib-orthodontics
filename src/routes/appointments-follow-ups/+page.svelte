@@ -108,11 +108,7 @@
         return false
     }
     function showDisabledCardButtonPlaceHolder(dataObj: DbRow): boolean {
-        if(
-            dataObj.attended !== null || 
-            dataObj.status === "appointment_booked" || 
-            dataObj.status === "appointment_cancelled"
-        ) return true
+        if(dataObj.attended === true && dataObj.next_appointment_created) return true
         else return false
     } 
     function showAppointmentAttendanceControls(dataObj: DbRow): boolean {
@@ -120,12 +116,8 @@
         else return false
     }
     function isPatientCardDisabled(dataObj: DbRow): boolean {
-        if(
-            dataObj.attended !== null || 
-            dataObj.status === "appointment_refused" ||
-            dataObj.status === "appointment_booked" || 
-            dataObj.status === "appointment_cancelled"
-        ) return true
+        if(dataObj.status === "appointment_refused") return true
+        else if (dataObj.attended === true && dataObj.next_appointment_created) return true
         else return false
     }
     function isPatientFormStatusDisabled(dataObj: DbRow): boolean {
@@ -147,7 +139,14 @@
     let filterDate1 = $state("")
     let filterDate2 = $state("")
     let loading = $state(false)
-
+    function checkData(dataObj: DbRow): boolean {
+        if(
+            dataObj.attended !== null || 
+            dataObj.status === "appointment_booked" || 
+            dataObj.status === "appointment_cancelled"
+        ) return true
+        else return false
+    }
     $effect(() => {
         if(filterDate1 && filterDate2) {
             loading = true
@@ -155,18 +154,18 @@
                 loading = false
             }, 200)
             if(filterDate1 > filterDate2) {
-                orderedFormSubmissionsList = getOrderedDataList(formSubmissions, 'created_at', [filterDate1, filterDate2])
+                orderedFormSubmissionsList = getOrderedDataList(formSubmissions, 'created_at', [filterDate1, filterDate2], checkData)
             } else if(filterDate1 < filterDate2) {
-                orderedFormSubmissionsList = getOrderedDataList(formSubmissions, 'created_at', [filterDate2, filterDate1])
+                orderedFormSubmissionsList = getOrderedDataList(formSubmissions, 'created_at', [filterDate2, filterDate1], checkData)
             } else if(filterDate1 === filterDate2) {
-                orderedFormSubmissionsList = getOrderedDataList(formSubmissions, 'created_at', [filterDate2, filterDate1])
+                orderedFormSubmissionsList = getOrderedDataList(formSubmissions, 'created_at', [filterDate2, filterDate1], checkData)
             }
         } else {
             loading = true
             setTimeout(() => {
                 loading = false
             }, 200)
-            orderedFormSubmissionsList = getOrderedDataList(formSubmissions, 'created_at', null)
+            orderedFormSubmissionsList = getOrderedDataList(formSubmissions, 'created_at', null, checkData)
         }
     })
     const todayDateObj = $state(new Date())
@@ -233,12 +232,12 @@
                         }}
                         texts={{
                             alertCardText: getAlertText(formSubmission),
-                            disabledButtonPlaceholderText: "تم النقل إلى \"متابعة الحجوزات\"",
+                            disabledButtonPlaceholderText: "",
                         }}
                         visibleControls={{
                             disabledCardButtonPlaceHolder: showDisabledCardButtonPlaceHolder(formSubmission),
-                            appointmentAttendanceControls: false,
-                            newAppointmentButton: false,
+                            appointmentAttendanceControls: showAppointmentAttendanceControls(formSubmission),
+                            newAppointmentButton: displayNewAppointmentButton(formSubmission),
                             
                         }}
                     />
