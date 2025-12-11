@@ -6,147 +6,69 @@
 	import PatientCard from '$lib/PatientCard.svelte';
 	import type { Database } from '$lib/database.types.js';
 	import { fade } from 'svelte/transition';
+	import { goto } from '$app/navigation';
 
-    type DbRow = Database['public']['Views']['patient_form_submission_appointments']['Row'];
+    type DbRow = Database['public']['Views']['patient_form_submissions']['Row'];
 
     let { data } = $props();
     const formSubmissions = data.formSubmissions
 
 
+    function getAlertText(dataObj: DbRow): string {
+        let alertText = ''
+        if(dataObj.appointment_id) {
+            alertText = 'تم حجز الموعد'
+        } else {
+            if(dataObj.status === "appointment_refused") alertText = "رفض الحجز"
+            else if(dataObj.status === "no_respose") alertText = "لم يتم الرد"
+            else alertText = "جديد"
+        }
+
+        return alertText
+    }
     function getPatientCardStyle(dataObj: DbRow): string {
-        if(dataObj.attended === null) {
-            switch (dataObj.status) {
-                case "appointment_booked":
-                    return "border-green-600"
-                case "appointment_refused":
-                    return "border-gray-600"
-                case "no_respose":
-                    return "border-red-600"
-                case "appointment_cancelled":
-                    return "border-red-600"
-                case null:
-                    return "border-orange-600/70 shadow-sm shadow-orange-600"
-                default:
-                    break
-            }
-        }
-        else if(dataObj.attended === true) {
+        if(dataObj.appointment_id) {
             return "border-green-600"
-        } else if(dataObj.attended === false) {
-            if(dataObj.status === "appointment_booked") return "border-red-600"
+        } else {
+            if(dataObj.status === "appointment_refused") return "border-gray-600"
+            else if(dataObj.status === "no_respose") return "border-red-600"
+            else return "border-orange-600/70"
         }
-        return ""
     }
 
 
     function getAlertCardStyle(dataObj: DbRow): string {
-        if(dataObj.attended === null) {
-            switch (dataObj.status) {
-                case "appointment_booked":
-                    return "bg-green-600 w-26"
-                case "no_respose":
-                    return "bg-red-600"
-                case "appointment_refused":
-                    return "bg-gray-600"
-                case "appointment_cancelled":
-                    return "bg-red-600 drop-shadow-md drop-shadow-red-600/70"
-                case null:
-                    return "bg-orange-600 shadow-xl shadow-orange-600"
-                default:
-                    break
-            }
-        } else if(dataObj.attended === true) {
-            if(dataObj.status === "appointment_booked") return "bg-green-600 w-26"
-        } else if(dataObj.attended === false) {
-            if(dataObj.status === "appointment_booked") return "bg-red-600 drop-shadow-md drop-shadow-red-600/70"
+        if(dataObj.appointment_id) {
+            return "bg-green-600 w-26"
+        } else {
+            if(dataObj.status === "appointment_refused") return "bg-gray-600"
+            else if(dataObj.status === "no_respose") return "bg-red-600"
+            else return "bg-orange-600 shadow-xl shadow-orange-600"
         }
-        return ""
     }
 
-    function getAlertText(dataObj: DbRow): string {
-        let alertText = ''
-        if(dataObj.attended === null) {
-            switch (dataObj.status) {
-                case "appointment_booked":
-                    alertText = `${formatTime(dataObj.appointment_date!)} \n ${formatDate(dataObj.appointment_date!)}`
-                    break;
-                case "appointment_refused":
-                    alertText = "رفض الحجز"
-                    break;
-                case "no_respose":
-                    alertText = "لم يتم الرد"
-                    break;
-                case "appointment_cancelled":
-                    alertText = "تم إلغاء الموعد"
-                    break;
-                case null:
-                    alertText = "جديد"
-                    break;
-                default:
-                    break;
-            }
-        } else {
-            switch (dataObj.attended) {
-                case true:
-                    alertText = "تم حضور الموعد"
-                    break;
-                case false:
-                    alertText = "لم يحضر الموعد"
-                    break;
-                default:
-                    break;
-            }
-        }
-        return alertText
-    }
-    function displayNewAppointmentButton(dataObj: DbRow): boolean {
-        if(dataObj.attended === null) {
-            if(dataObj.status === "appointment_cancelled" && !dataObj.next_appointment_created) return true
-        } else if (dataObj.attended === false && !dataObj.next_appointment_created) return true
-        else if (dataObj.attended === true && !dataObj.next_appointment_created) return true
-        
-        return false
-    }
+
     function showDisabledCardButtonPlaceHolder(dataObj: DbRow): boolean {
-        if(
-            dataObj.attended !== null || 
-            dataObj.status === "appointment_booked" || 
-            dataObj.status === "appointment_cancelled"
-        ) return true
-        else return false
+        if(dataObj.appointment_id) return true
+            else return false
     } 
-    function showAppointmentAttendanceControls(dataObj: DbRow): boolean {
-        if(dataObj.status === "appointment_booked" && dataObj.attended === null) return true
-        else return false
-    }
     function isPatientCardDisabled(dataObj: DbRow): boolean {
-        if(
-            dataObj.attended !== null || 
-            dataObj.status === "appointment_refused" ||
-            dataObj.status === "appointment_booked" || 
-            dataObj.status === "appointment_cancelled"
-        ) return true
-        else return false
+        if(dataObj.appointment_id || dataObj.status === "appointment_refused") return true
+            else return false
     }
     function isPatientFormStatusDisabled(dataObj: DbRow): boolean {
-        if(
-            dataObj.attended === true || 
-            dataObj.attended === false || 
-            dataObj.status === "appointment_cancelled"
-        ) 
-            return true
-        else 
-            return false
+        if(dataObj.appointment_id) return true
+            else return false
     }
     function isPatientFormStatusRequired(dataObj: DbRow): boolean {
-        if(dataObj.attended === null && dataObj.status !== "appointment_cancelled") return true
+        if(!dataObj.appointment_id && dataObj.status === null) return true
         else return false
     }
-    let orderedFormSubmissionsList = $state(getOrderedDataList(formSubmissions, 'created_at', ['12-7-2025', '12-5-2025']))
-
+    
     let filterDate1 = $state("")
     let filterDate2 = $state("")
     let loading = $state(false)
+    let orderedFormSubmissionsList = $state({} as DbRow[])
 
     $effect(() => {
         if(filterDate1 && filterDate2) {
@@ -222,10 +144,6 @@
                     {/if}
                     <PatientCard 
                         patientData={formSubmission}
-                        updatePatientDataForm={{
-                            patientStatusDisabled: isPatientFormStatusDisabled(formSubmission),
-                            patientStatusRequired: isPatientFormStatusRequired(formSubmission),
-                        }}
                         cardStyle={{
                             patientCardStyle: getPatientCardStyle(formSubmission),
                             alertCardStyle: getAlertCardStyle(formSubmission),
@@ -236,10 +154,35 @@
                             disabledButtonPlaceholderText: "تم النقل إلى \"متابعة الحجوزات\"",
                         }}
                         visibleControls={{
-                            disabledCardButtonPlaceHolder: showDisabledCardButtonPlaceHolder(formSubmission),
+                            disabledCardButtonPlaceHolder: {
+                                show: showDisabledCardButtonPlaceHolder(formSubmission),
+                                action: () => {
+                                    goto(`/appointments-follow-ups/#${formSubmission.appointment_id}`)
+                                }
+                            },
                             appointmentAttendanceControls: false,
                             newAppointmentButton: false,
                             
+                        }}
+                        formControls={{
+                            editPatientForm: {
+                                preliminaryData: [
+                                    { name: "patient_id", value: formSubmission.patient_id! },
+                                    { name: "form_id", value: formSubmission.form_id! },
+                                ],
+                                formSelect: {
+                                    defaultValue: formSubmission.status!,
+                                    options: [
+                                        { value: "appointment_refused", label: "رفض الحجز" },
+                                        { value: "no_respose", label: "لم يتم الرد" },
+                                        { value: "appointment_booked", label: "تم الحجز" },
+                                    ],
+                                    disabled: isPatientFormStatusDisabled(formSubmission),
+                                    required: isPatientFormStatusRequired(formSubmission),
+                                    showDatePicker: true
+                                },
+                                formAction: "?/update"
+                            },
                         }}
                     />
                 {/each}

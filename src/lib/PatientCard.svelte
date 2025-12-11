@@ -11,24 +11,17 @@
 	import Form from "./Form.svelte";
 	import type { Database } from "$lib/database.types";
 
-    const callStatuses = [
-        { value: "appointment_refused", label: "رفض الحجز" },
-        { value: "no_respose", label: "لم يتم الرد" },
-        { value: "appointment_booked", label: "تم الحجز" },
-    ]
+    type DbRow1 = Database['public']['Views']['patient_form_submissions']['Row'];
+    type DbRow2 = Database['public']['Views']['patient_appointment']['Row'];
+    type PreliminaryData = { name: string; value: string | number }[]
     let { 
         patientData,
-        updatePatientDataForm,
         cardStyle,
         texts,
         visibleControls,
+        formControls
     }: { 
-        patientData: Database["public"]["Views"]["patient_form_submission_appointments"]["Row"],
-        updatePatientDataForm: {
-            patientStatusRequired: boolean;
-            patientStatusDisabled: boolean;
-
-        }
+        patientData: DbRow1 | DbRow2;
         cardStyle: {
             patientCardStyle: string;
             alertCardStyle: string;
@@ -39,11 +32,42 @@
             disabledButtonPlaceholderText: string;
         },
         visibleControls: {
+            mergePatientCardTriggerActions?: boolean;
             newAppointmentButton: boolean;
             appointmentAttendanceControls: boolean;
-            disabledCardButtonPlaceHolder: boolean;
+            disabledCardButtonPlaceHolder?: {
+                show: boolean;
+                action?: () => void;
+            };
+        },
+        formControls: {
+            editPatientForm?: {
+                preliminaryData: PreliminaryData
+                formSelect?: {
+                    required: boolean,
+                    disabled: boolean,
+                    defaultValue: string,
+                    options: { value: string; label: string }[]
+                    showDatePicker: boolean
+                },
+                formAction: string
+            },
+            appointmentAttendedConfirmationForm?: {
+                preliminaryData: PreliminaryData
+                formAction: string
+            },
+            cancelAppointmentConfirmationForm?: {
+                preliminaryData: PreliminaryData
+                formAction: string
+            },
+            newAppointmentForm?: {
+                preliminaryData: PreliminaryData
+                formAction: string
+            }
         }
     } = $props()
+
+    const selectOptions = formControls.editPatientForm?.formSelect?.options
 
 
     
@@ -51,143 +75,132 @@
     let isEditFormOpen = $state({ value: false })
     let isNewAppointmentFormOpen = $state({ value: false})
     let isCancelAppointmentConfirmationOpen = $state({ value: false })
-    let callStatusSelectValue = $state<string>(patientData.status ?? "");
+    let callStatusSelectValue = $state<string>(formControls.editPatientForm?.formSelect?.defaultValue ?? "");
     const selectedLabel = $derived(
         callStatusSelectValue
-            ? callStatuses.find((callStatus) => callStatus.value === callStatusSelectValue)?.label
+            ? selectOptions?.find((callStatus) => callStatus.value === callStatusSelectValue)?.label
             : "لم يتم التواصل"
     );
-    const appointmentDateProcessed = $derived(patientData.appointment_date ? new Date(patientData.appointment_date).toISOString().split('T')[0] : "")
-    const appointmentTimeProcessed = $derived(patientData.appointment_date ? new Date(patientData.appointment_date).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false}) : "")
 
     let appointmentAttendedConfirmation = $state({ value: false })
 
-    // TODO: calculate based on the buttons not on the status
     function calculateCollapsableHeight() {
         const baseLevelHeight = 54
         let currentLevel = 2
         if(visibleControls.appointmentAttendanceControls) currentLevel += 2
         if(visibleControls.newAppointmentButton) currentLevel += 1
-        if(visibleControls.disabledCardButtonPlaceHolder) currentLevel += 1
-
+        if(visibleControls.disabledCardButtonPlaceHolder?.show) currentLevel += 1
         return currentLevel * baseLevelHeight
     }
 
     let patientCardTriggerHeight = $state(0)
 </script>
 
-{#if isEditFormOpen.value}
+{#if formControls.editPatientForm && isEditFormOpen.value}
     <Form
         isFormOpen={isEditFormOpen}
         formData={{
             title: "تحديث بيانات الكشف",
-            preliminaryData: [
-                { name: "patient_id", value: patientData.patient_id! },
-                { name: "form_id", value: patientData.form_id! },
-                { name: "appointment_id", value: patientData.appointment_id! },
-            ],
+            preliminaryData: formControls.editPatientForm?.preliminaryData ,
             actionButtonsProperties: {
                 actionButtonsType: "icons",
                 actionButtonsFunctions: {
                     cancel: () => {
-                        callStatusSelectValue = patientData.status ?? ""
+                        callStatusSelectValue = formControls.editPatientForm?.formSelect?.defaultValue ?? ""
                     }
                 }
             },
-            formAction: "?/update"
+            formAction: formControls.editPatientForm?.formAction
         }}
     >
         <input type="text" name="full_name" class="w-full p-2 rounded-md bg-orange-100 font-bold text-orange-900" value="{patientData.full_name}" required>
         <input type="text" name="phone_number" class="w-full p-2 rounded-md bg-orange-100 font-bold text-orange-900" value="{patientData.phone_number}" required>
-        <Select.Root
-            type="single"
-            name="call_status"
-            onValueChange={(v) => (callStatusSelectValue = v)}
-            items={callStatuses}
-            allowDeselect={false}
-            value={patientData.status ?? undefined}
-            required={updatePatientDataForm.patientStatusRequired}
-            disabled={updatePatientDataForm.patientStatusDisabled}
-        >
-            <Select.Trigger
-                class="mt-4 h-input rounded-9px border-border-input bg-orange-300 data-placeholder:text-orange-900 data-placeholder:font-bold inline-flex w-full 
-                    touch-none select-none items-center border px-[11px] text-sm transition-colors"
-                style="opacity: {updatePatientDataForm.patientStatusDisabled ? 0.5 : 1};"
-                aria-label="Call Status"
-                dir="rtl"
+        {#if formControls.editPatientForm.formSelect}
+            <Select.Root
+                type="single"
+                name="status"
+                onValueChange={(v) => (callStatusSelectValue = v)}
+                items={selectOptions}
+                allowDeselect={false}
+                value={formControls.editPatientForm?.formSelect?.defaultValue ?? undefined}
+                required={formControls.editPatientForm.formSelect?.required}
+                disabled={formControls.editPatientForm.formSelect?.disabled}
             >
-                <CaretUpDown class="text-muted-foreground ml-auto size-6" />
-                <span class="text-orange-900 font-bold">{selectedLabel}</span>
-                <Phone class="text-orange-900 mr-[9px] size-6" />
-            </Select.Trigger>
-            
-            <Select.Portal>
-                <Select.Content
-                    class="focus-override border-muted bg-orange-300 shadow-popover data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 
-                        data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2
-                        data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 outline-hidden z-50 max-h-(--bits-select-content-available-height) w-full
-                        min-w-(--bits-select-anchor-width) select-none rounded-xl border px-1 py-3 data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1
-                    "
-                    sideOffset={10}
+                <Select.Trigger
+                    class="mt-4 h-input rounded-9px border-border-input bg-orange-300 data-placeholder:text-orange-900 data-placeholder:font-bold inline-flex w-full 
+                        touch-none select-none items-center border px-[11px] text-sm transition-colors"
+                    style="opacity: {formControls.editPatientForm.formSelect?.disabled ? 0.5 : 1};"
+                    aria-label="Status"
+                    dir="rtl"
                 >
-                    <Select.Viewport class="p-1" dir="rtl">
-                        {#each callStatuses as callStatus}
-                            <Select.Item
-                                class="rounded-button data-highlighted:bg-orange-200 outline-hidden flex h-10 w-full select-none items-center py-3 pl-5 pr-1.5 text-sm font-bold text-orange-900"
-                                value={callStatus.value}
-                                label={callStatus.label}
-                            >
-                                {#snippet children({ selected })}
-                                    {callStatus.label}
-                                    {#if selected}
-                                        <div class="ml-auto">
-                                            <Check aria-label="check" />
-                                        </div>
-                                    {/if}
-                                {/snippet}
-                            </Select.Item>
-                        {/each}
-                    </Select.Viewport>
-                </Select.Content>
+                    <CaretUpDown class="text-muted-foreground ml-auto size-6" />
+                    <span class="text-orange-900 font-bold">{selectedLabel}</span>
+                    <Phone class="text-orange-900 mr-[9px] size-6" />
+                </Select.Trigger>
+                
+                <Select.Portal>
+                    <Select.Content
+                        class="focus-override border-muted bg-orange-300 shadow-popover data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 
+                            data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2
+                            data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 outline-hidden z-50 max-h-(--bits-select-content-available-height) w-full
+                            min-w-(--bits-select-anchor-width) select-none rounded-xl border px-1 py-3 data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1
+                        "
+                        sideOffset={10}
+                    >
+                        <Select.Viewport class="p-1" dir="rtl">
+                            {#each selectOptions as selectOption}
+                                <Select.Item
+                                    class="rounded-button data-highlighted:bg-orange-200 outline-hidden flex h-10 w-full select-none items-center py-3 pl-5 pr-1.5 text-sm font-bold text-orange-900"
+                                    value={selectOption.value}
+                                    label={selectOption.label}
+                                >
+                                    {#snippet children({ selected })}
+                                        {selectOption.label}
+                                        {#if selected}
+                                            <div class="ml-auto">
+                                                <Check aria-label="check" />
+                                            </div>
+                                        {/if}
+                                    {/snippet}
+                                </Select.Item>
+                            {/each}
+                        </Select.Viewport>
+                    </Select.Content>
 
-            </Select.Portal>
-        </Select.Root>
-        <div 
-            class="h-0 overflow-hidden transition-all flex flex-col gap-2 justify-center items-center w-full pb-2"
-            class:h-45={callStatusSelectValue === "appointment_booked"}
-        >
-            <label for="new_appointment_date" class="w-full text-right mt-2 text-orange-900 font-bold">تاريخ الحجز</label>
-            <input 
-                class="bg-orange-100 w-9/10 p-2 rounded-md" 
-                class:opacity-50={updatePatientDataForm.patientStatusDisabled}
-                type="date" 
-                name="new_appointment_date" 
-                value="{appointmentDateProcessed}"
-                disabled={updatePatientDataForm.patientStatusDisabled}
-            />
-            <label for="new_appointment_time" class="w-full text-right text-orange-900 font-bold">موعد الحجز</label>
-            <input 
-                class="bg-orange-100 w-9/10 p-2 rounded-md" 
-                class:opacity-50={updatePatientDataForm.patientStatusDisabled}
-                type="time" 
-                name="new_appointment_time" 
-                value="{appointmentTimeProcessed}"
-                disabled={updatePatientDataForm.patientStatusDisabled}
-            />
-        </div>
+                </Select.Portal>
+            </Select.Root>
+            <div 
+                class="h-0 overflow-hidden transition-all flex flex-col gap-2 justify-center items-center w-full pb-2"
+                class:h-45={callStatusSelectValue === "appointment_booked"}
+            >
+                <label for="new_appointment_date" class="w-full text-right mt-2 text-orange-900 font-bold">تاريخ الحجز</label>
+                <input 
+                    class="bg-orange-100 w-9/10 p-2 rounded-md" 
+                    class:opacity-50={formControls.editPatientForm.formSelect?.disabled}
+                    type="date" 
+                    name="new_appointment_date" 
+                    disabled={formControls.editPatientForm.formSelect?.disabled}
+                />
+                <label for="new_appointment_time" class="w-full text-right text-orange-900 font-bold">موعد الحجز</label>
+                <input 
+                    class="bg-orange-100 w-9/10 p-2 rounded-md" 
+                    class:opacity-50={formControls.editPatientForm.formSelect?.disabled}
+                    type="time" 
+                    name="new_appointment_time" 
+                    disabled={formControls.editPatientForm.formSelect?.disabled}
+                />
+            </div>
+        {/if}
+
     </Form>
 {/if}
 
-{#if appointmentAttendedConfirmation.value}
+{#if formControls.appointmentAttendedConfirmationForm && appointmentAttendedConfirmation.value}
     <Form
         isFormOpen={appointmentAttendedConfirmation}
         formData={{
             title: "",
-            preliminaryData: [
-                { name: "patient_id", value: patientData.patient_id! },
-                { name: "form_id", value: patientData.form_id! },
-                { name: "appointment_id", value: patientData.appointment_id! },
-            ],
+            preliminaryData: formControls.appointmentAttendedConfirmationForm?.preliminaryData,
             actionButtonsProperties: {
                 removeActionButtons: true
             }
@@ -219,15 +232,12 @@
 
 {/if}
 
-{#if isCancelAppointmentConfirmationOpen.value}
+{#if formControls.cancelAppointmentConfirmationForm && isCancelAppointmentConfirmationOpen.value}
     <Form
         isFormOpen={isCancelAppointmentConfirmationOpen}
         formData={{
             title: "هل انت متأكد من إلغاء الموعد؟",
-            preliminaryData: [
-                { name: "form_id", value: patientData.form_id! },
-                { name: "appointment_id", value: patientData.appointment_id! },
-            ],
+            preliminaryData: formControls.cancelAppointmentConfirmationForm?.preliminaryData,
             actionButtonsProperties: {
                 actionButtonsType: "text",
                 actionButtonsTexts: {
@@ -238,25 +248,22 @@
                     submit: "bg-red-600",
                 },
             },
-            formAction: "?/cancelAppointment"
+            formAction: formControls.cancelAppointmentConfirmationForm?.formAction
         }}
     >
         <span></span>
     </Form>
 {/if}
-{#if isNewAppointmentFormOpen.value}
+{#if formControls.newAppointmentForm && isNewAppointmentFormOpen.value}
     <Form
         isFormOpen={isNewAppointmentFormOpen}
         formData={{
             title: "انشاء موعد جديد",
-            preliminaryData: [
-                { name: "patient_id", value: patientData.patient_id! },
-                { name: "form_id", value: patientData.form_id! },
-            ],
+            preliminaryData: formControls.newAppointmentForm?.preliminaryData,
             actionButtonsProperties: {
                 actionButtonsType: "icons",
             },
-            formAction: "?/newAppointment"
+            formAction: formControls.newAppointmentForm?.formAction
         }}
     >
         <div class="flex flex-col gap-2 justify-center items-center w-full pb-2">
@@ -276,12 +283,12 @@
     </Form>
 {/if}
 
-<div class="z-10 flex justify-center w-full">
+<div class="z-10 flex justify-center w-full" id="{ patientData.appointment_id ? patientData.appointment_id.toString() : ""}">
     <button 
         class={[
-            " w-full p-3 bg-orange-200 hover:bg-orange-300 transition rounded-md rounded-r-none flex justify-between items-center gap-3 border-3 border-r-0 cursor-pointer",
+            "peer w-full p-3 bg-orange-200 hover:bg-orange-300 transition rounded-md rounded-r-none flex justify-between items-center gap-3 border-3 border-r-0 cursor-pointer",
             !isCollapsableOpen && cardStyle.disablePatientCard ? "opacity-70" : "opacity-100",
-            cardStyle
+            cardStyle.patientCardStyle
         ]}
         bind:offsetHeight={patientCardTriggerHeight}
         onclick={() => isCollapsableOpen = !isCollapsableOpen}
@@ -302,11 +309,18 @@
     <button 
         class={[
             "flex items-center p-3 pl-1 bg-orange-200 hover:bg-orange-300 transition rounded-md rounded-l-none border-3 border-l-0 cursor-pointer",
+            visibleControls.mergePatientCardTriggerActions ? "peer-hover:bg-orange-300" : "",
             !isCollapsableOpen && cardStyle.disablePatientCard ? "opacity-70" : "opacity-100",
-            cardStyle
+            cardStyle.patientCardStyle
         ]}
         style="height: {patientCardTriggerHeight}px;"
-        onclick={() => isEditFormOpen.value = true}
+        onclick={() => {
+            if(visibleControls.mergePatientCardTriggerActions) {
+                isCollapsableOpen = !isCollapsableOpen
+            } else {
+                isEditFormOpen.value = true
+            }
+        }}
     >
 
 
@@ -390,11 +404,15 @@
 
             </button>
         </div>
-    {:else if visibleControls.disabledCardButtonPlaceHolder}
+    {:else if visibleControls.disabledCardButtonPlaceHolder?.show}
         <div class="p-3 w-full flex justify-around md:justify-start items-center gap-3 md:gap-6 md:pl-9">
             <button 
-                class="w-full py-2 bg-green-200 rounded-md flex justify-center items-center gap-3 border-dashed border-2 border-green-900 opacity-70"
+                class={[
+                    "w-full py-2 bg-green-200 rounded-md flex justify-center items-center gap-3 border-dashed border-2 border-green-900 opacity-70",
+                    visibleControls.disabledCardButtonPlaceHolder.show ? "cursor-pointer hover:bg-green-300 transition opacity-100" : ""
+                ]}
                 type="button"
+                onclick={() => visibleControls.disabledCardButtonPlaceHolder?.action?.() }
             >
                 <p class="font-bold text-lg text-green-900" dir="rtl">{texts.disabledButtonPlaceholderText}</p>
 

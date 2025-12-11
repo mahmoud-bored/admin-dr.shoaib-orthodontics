@@ -2,25 +2,30 @@
     import { page } from '$app/state';
 	import Plus from 'phosphor-svelte/lib/Plus';
     const patient_id = page.url.searchParams.get('patient_id');
-    const form_id = page.url.searchParams.get('form_id');
     const appointment_id = page.url.searchParams.get('appointment_id');
 
-    console.log(patient_id, form_id, appointment_id)
+    console.log(patient_id, appointment_id)
     let isPaymentFormOpen = $state(false)
     let paymentAmount = $state(0)
     let isAmountPositive = $state("true")
-    
+    let notes = $state("")
+
     let isNewAppointmentFormOpen = $state(false)
-    // let isAmountPositiveElmntValue = $state(true)
+
+    const notesList = [
+        { text: "ملاحظة 1" },
+        { text: "ملاحظة 2" },
+        { text: "ملاحظة 3" },
+    ]
 </script>
 
 <div class="p-4 w-full h-full flex justify-center">
     <form method="POST" class="w-full lg:w-8/10 max-w-4xl flex flex-col items-center gap-3">
         <input type="text" name="patient_id" value="{patient_id}" hidden>
-        <input type="text" name="form_id" value="{form_id}" hidden>
         <input type="text" name="appointment_id" value="{appointment_id}" hidden>
         <input type="text" name="new_payment" value="{isPaymentFormOpen ? "true" : "false"}" hidden>
         <input type="text" name="new_appointment" value="{isNewAppointmentFormOpen ? "true" : "false"}" hidden>
+        <input type="text" name="notes" bind:value={notes} hidden>
         
         <div class="w-full md:max-w-[400px] bg-green-100 border-2 border-green-600 p-3 rounded-md">
             <p class="w-full text-center text-lg text-green-600 font-bold">تم تأكيد حضور الموعد بنجاح</p>   
@@ -29,7 +34,7 @@
         <button 
             type="button"
             class={[
-                "w-full pz-4 py-2  rounded-md flex justify-center items-center gap-3  transition cursor-pointer drop-shadow",
+                "w-full py-2  rounded-md flex justify-center items-center gap-3  transition cursor-pointer drop-shadow",
                 isPaymentFormOpen ? "bg-gray-700 hover:bg-gray-800" : "bg-orange-900 hover:bg-orange-800"
             ]}
             onclick={() => isPaymentFormOpen = !isPaymentFormOpen }
@@ -69,7 +74,7 @@
         <button 
             type="button"
             class={[
-                "w-full pz-4 py-2 rounded-md flex justify-center items-center gap-3 transition cursor-pointer drop-shadow",
+                "w-full py-2 rounded-md flex justify-center items-center gap-3 transition cursor-pointer drop-shadow",
                 isNewAppointmentFormOpen ? "bg-gray-700 hover:bg-gray-800" : "bg-orange-900 hover:bg-orange-800"
             ]}
             onclick={() => isNewAppointmentFormOpen = !isNewAppointmentFormOpen}    
@@ -87,6 +92,41 @@
                 <input class="bg-orange-200 w-full p-2 rounded-md" type="time" name="new_appointment_time">
             </div>
         </div>
+
+        <hr class="w-8/10 border border-orange-900/40 self-center my-2"/>
+
+        <div class="w-full flex flex-col justify-center items-center gap-3">
+            <p class="text-xl font-bold w-full text-right text-orange-900 mb-4">إضافة ملاحظات</p>
+            {#each notesList as note}
+                <button 
+                    type="button"
+                    class={[
+                        "w-9/10 py-2 rounded-md flex justify-center items-center gap-3 transition cursor-pointer drop-shadow  hover:bg-sky-800 hover:text-orange-50 font-bold border-2 border-sky-900/30",
+                        notes == note.text ? "bg-sky-800 text-orange-50" : "bg-sky-200 text-orange-900"
+                    ]}
+                    onclick={() => {
+                        if(notes == note.text) notes = ""
+                            else notes = note.text
+                        
+                    }}    
+                >
+                    {note.text}
+                </button>
+            {/each}
+            <div class="w-full flex justify-center items-center gap-2 text-lg font-bold text-orange-900 mt-4" dir="rtl">
+                <input 
+                    type="text" 
+                    name="other-note" 
+                    placeholder="ملاحظات اخرى"
+                    class="border-b border-orange-900 rounded-sm bg-orange-100 p-2 w-9/10"
+                />
+            </div>
+
+        </div>
+
+
+
+
         <div class="fixed bottom-2 p-3 flex w-full">
             <button 
                 type="submit" 

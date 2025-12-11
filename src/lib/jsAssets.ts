@@ -26,23 +26,17 @@ export function formatTime(timeString: string) {
   })
 }
 
-type DbRow = Database['public']['Views']['patient_form_submission_appointments']['Row'];
 
-export function getOrderedDataList(
-    dataObj: DbRow[], 
-    dataFieldName: keyof DbRow, 
+export function getOrderedDataList<T>(
+    dataObj: T[], 
+    dataFieldName: keyof T, 
     date: [string, string] | null, 
-    dataChecker: (dataObj: DbRow) => boolean = () => true
-): DbRow[] {
+    dataChecker: (dataObj: T) => boolean = () => true,
+    reverseOrder: boolean = false
+): T[] {
     const resultData = dataObj.filter((item) => {
         if(!dataChecker(item)) return
         const itemDate = new Date(item[dataFieldName] as string)
-        const todayDate = new Date((new Date()).toLocaleDateString([], {
-            day: "2-digit",
-            year: "numeric",
-            month: "2-digit"
-        }))
-
         if(date instanceof Array) {
             const endDate = new Date(date[0])
             const startDate = new Date(date[1])
@@ -64,8 +58,13 @@ export function getOrderedDataList(
     })
 
     resultData.sort((a, b) => {
-        return new Date(b[dataFieldName] as string).getTime() - 
-                new Date(a[dataFieldName] as string).getTime()
+        if(reverseOrder) {
+            return new Date(a[dataFieldName] as string).getTime() - 
+                new Date(b[dataFieldName] as string).getTime()
+        } else {
+            return new Date(b[dataFieldName] as string).getTime() - 
+                    new Date(a[dataFieldName] as string).getTime()
+        }
     })
     return resultData
 }
@@ -85,6 +84,10 @@ export function search(data: any[], dataFieldName: string, searchString: string)
     return resultData
 }
 
-export function getFullDateISOString(dateString: string, timeString: string) {
-    return (dateString && timeString) ? new Date(dateString + ' ' + timeString).toISOString() : null
+export function getFullDateISOString(dateString: string, timeString: string): string {
+    if(dateString && timeString) return new Date(dateString + ' ' + timeString).toISOString()
+        else {
+            console.error('dateString or timeString is empty', dateString, timeString)
+            return ''
+        } 
 }
