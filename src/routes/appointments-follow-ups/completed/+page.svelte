@@ -93,7 +93,7 @@
             </div>
         </div>
 
-        <hr class="w-8/10 border border-orange-900/40 self-center my-2"/>
+        <!-- <hr class="w-8/10 border border-orange-900/40 self-center my-2"/>
 
         <div class="w-full flex flex-col justify-center items-center gap-3">
             <p class="text-xl font-bold w-full text-right text-orange-900 mb-4">إضافة ملاحظات</p>
@@ -122,7 +122,7 @@
                 />
             </div>
 
-        </div>
+        </div> -->
 
 
 
