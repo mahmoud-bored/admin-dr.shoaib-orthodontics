@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Select } from "bits-ui";
+    import { Checkbox, Label, Select } from "bits-ui";
     import CaretUpDown from "phosphor-svelte/lib/CaretUpDown";
     import MobileDevice from 'phosphor-svelte/lib/DeviceMobileSpeaker'
 	import Phone from 'phosphor-svelte/lib/Phone';
@@ -49,6 +49,9 @@
                     defaultValue: string,
                     options: { value: string; label: string }[]
                     showDatePicker: boolean
+                },
+                formCheckbox?: {
+                    name: string,
                 },
                 formAction: string
             },
@@ -192,6 +195,36 @@
             </div>
         {/if}
 
+        {#if formControls.editPatientForm?.formCheckbox?.name}
+            <div class="flex items-center space-x-3 mr-3 mt-2" dir="rtl">
+                <Checkbox.Root
+                    id="long_term"
+                    aria-labelledby="long_term"
+                    class="border-muted bg-foreground data-[state=unchecked]:border-border-input data-[state=unchecked]:bg-background data-[state=unchecked]:hover:border-dark-40 
+                        peer inline-flex size-[25px] items-center justify-center rounded-md border transition-all duration-150 ease-in-out active:scale-[0.98]"
+                    name={formControls.editPatientForm?.formCheckbox.name}
+                    value="true"
+                >
+                    {#snippet children({ checked })}
+                        <div class="text-background inline-flex items-center justify-center">
+                            {#if checked}
+                                <Check class="size-[15px]" weight="bold" />
+                            {/if}
+                        </div>
+                    {/snippet}
+                </Checkbox.Root>
+                <Label.Root
+                    id="long_termlabel"
+                    for="long_term"
+                    class="text-lg font-bold text-orange-900 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                    تم تركيب تقوم
+                    <span class="text-orange-900/80">
+                        (نقل إلى متابعات المرضى)
+                    </span>
+                </Label.Root>
+            </div>
+        {/if}
     </Form>
 {/if}
 

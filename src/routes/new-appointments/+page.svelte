@@ -92,10 +92,10 @@
         }
     })
     const todayDateObj = $state(new Date())
-    const todayDateString = $state(formatDate(todayDateObj.toISOString()))
+    const todayDateString = $state(formatDate(todayDateObj.toLocaleDateString()))
     const yesterdayDateObj = new Date(formatDate(todayDateString))
     yesterdayDateObj.setDate(todayDateObj.getDate() - 1)
-    const yesterdayDateString = $state(formatDate(yesterdayDateObj.toISOString()))
+    const yesterdayDateString = $state(formatDate(yesterdayDateObj.toLocaleDateString()))
     
     
 </script>

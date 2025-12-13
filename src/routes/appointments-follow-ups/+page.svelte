@@ -81,10 +81,10 @@
 
 
     const todayDateObj = $state(new Date())
-    const todayDateString = $state(formatDate(todayDateObj.toISOString()))
+    const todayDateString = $state(formatDate(todayDateObj.toLocaleDateString()))
     const tomorrowDateObj = new Date(formatDate(todayDateString))
     tomorrowDateObj.setDate(todayDateObj.getDate() + 1)
-    const tomorrowDateString = $state(formatDate(tomorrowDateObj.toISOString()))
+    const tomorrowDateString = $state(formatDate(tomorrowDateObj.toLocaleDateString()))
 
     let filterDate1 = $state("")
     let filterDate2 = $state("")
@@ -254,11 +254,15 @@
                         }}
                         formControls={{
                             editPatientForm: {
+                                formCheckbox: {
+                                    name: "long_term",
+                                },
                                 preliminaryData: [
                                     { name: "patient_id", value: formSubmission.patient_id! },
                                     { name: "appointment_id", value: formSubmission.appointment_id! },
                                 ],
-                                formAction: "?/update"
+
+                                formAction: "?/update",
                             },
                             appointmentAttendedConfirmationForm: {
                                 preliminaryData: [
@@ -285,16 +289,16 @@
             {:else}
                 <div class="w-full p-4 flex flex-col justify-center items-center gap-3 opacity-75">
                     <MobileDevice size={64} weight="thin" color="#441306" style="rotate: 180deg;" />
-                    <p class="text-lg font-bold text-orange-950" dir="rtl">لا توجد طلبات في الفترة المحددة!</p>
+                    <p class="text-lg font-bold text-orange-950" dir="rtl">لا توجد كشوفات في الفترة المحددة!</p>
                 </div>
                 <hr class="w-8/10 border border-orange-900/40 self-center my-2"/>
             {/if}
 
-            <hr class="w-8/10 border border-orange-900 self-center my-2"/>
-            <p class="text-2xl pb-8 font-bold text-center text-orange-900">
-                قديم
-            </p>
             {#if orderedPastAppointmentsList.length > 0}
+                <hr class="w-8/10 border border-orange-900 self-center my-2"/>
+                <p class="text-2xl pb-8 font-bold text-center text-orange-900">
+                    كشوفات سابقة
+                </p>
                 {#each orderedPastAppointmentsList as formSubmission, i}
                     {#if i === 0 || formatDate(formSubmission.appointment_date!) !== formatDate(orderedPastAppointmentsList[i - 1].appointment_date!)}
                         <p class="text-xl py-2 font-bold text-right text-orange-900">
@@ -327,6 +331,9 @@
                                     { name: "patient_id", value: formSubmission.patient_id! },
                                     { name: "appointment_id", value: formSubmission.appointment_id! },
                                 ],
+                                formCheckbox: {
+                                    name: "long_term",
+                                },
                                 formAction: "?/update"
                             },
                             appointmentAttendedConfirmationForm: {
@@ -351,7 +358,7 @@
                         }}
                     />
                 {/each}
-            {:else}
+            {:else if orderedFutureAppointmentsList.length !== 0}
                 <div class="w-full p-4 flex flex-col justify-center items-center gap-3 opacity-75">
                     <MobileDevice size={64} weight="thin" color="#441306" style="rotate: 180deg;" />
                     <p class="text-lg font-bold text-orange-950" dir="rtl">لا توجد طلبات في الفترة المحددة!</p>

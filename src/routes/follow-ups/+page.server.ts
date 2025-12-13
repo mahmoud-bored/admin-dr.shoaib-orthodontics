@@ -11,7 +11,7 @@ export async function load() {
     const { error: dbErr, data } = await supabase
         .from('patient_appointment')
         .select('*')
-        .eq('long_term', false);
+        .eq('long_term', true);
     if(dbErr) error(404);
     return {
         formSubmissions: data,
@@ -26,13 +26,15 @@ export const actions = {
         const patient_id = parseInt(formData.get('patient_id')?.toString() as string)
         const full_name = formData.get('full_name')?.toString()
         const phone_number = formData.get('phone_number')?.toString()
-        const long_term = formData.get('long_term')?.toString() === "true" ? true : false
 
         if(!patient_id || !full_name || !phone_number) redirect(303, '/dbError');
         
         const { error: dbErr } = await supabase
             .from('patient')
-            .update({ full_name, phone_number, long_term })
+            .update({
+                full_name: full_name,
+                phone_number: phone_number
+            })
             .eq('patient_id', patient_id);
 
         if(dbErr) {
@@ -55,7 +57,7 @@ export const actions = {
             console.log(dbErr)
             redirect(303, '/dbError');
         } else {
-            redirect(303, '/appointments-follow-ups/completed?patient_id=' + patient_id + '&appointment_id=' + appointment_id);
+            redirect(303, '/follow-ups/completed?patient_id=' + patient_id + '&appointment_id=' + appointment_id);
         }
     },
     absent: async ({ request }) => {
@@ -102,25 +104,6 @@ export const actions = {
                 appointment_date: getFullDateISOString(appointmentDate, appointmentTime),
             })
 
-        if(dbErr) {
-            console.log(dbErr)
-            redirect(303, '/dbError');
-        }
-    },
-    newPatientAndAppointment: async ({ request }) => {
-        const formData = await request.formData()
-        const new_full_name = formData.get('full_name')?.toString()
-        const new_phone_number = formData.get('phone_number')?.toString()
-        const new_appointment_date = formData.get('new_appointment_date')?.toString()
-        const new_appointment_time = formData.get('new_appointment_time')?.toString()
-        if(!new_full_name || !new_phone_number || !new_appointment_date || !new_appointment_time) redirect(303, '/dbError');
-        const new_appointment_full_date = getFullDateISOString(new_appointment_date, new_appointment_time)
-
-        const { error: dbErr } = await supabase.rpc('new_patient_and_appointment', {
-            new_full_name,
-            new_phone_number,
-            new_appointment_date: new_appointment_full_date
-        })
         if(dbErr) {
             console.log(dbErr)
             redirect(303, '/dbError');
