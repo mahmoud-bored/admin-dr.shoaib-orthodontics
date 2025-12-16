@@ -9,7 +9,7 @@
 	import Form from '$lib/Form.svelte';
 	import Plus from 'phosphor-svelte/lib/Plus';
 	import TelInputElmnt from '$lib/TelInputElmnt.svelte';
-
+	import UnderConstruction from '$lib/UnderConstruction.svelte';
 
     
     type DbRow = Database['public']['Views']['patient_appointment']['Row'];
@@ -127,8 +127,11 @@
 
 
 </script>
+
+<UnderConstruction />
+
 {#if loading}
-    <div class="absolute top-0 left-0 w-full h-full bg-amber-950/40 z-110 flex justify-center items-center" transition:fade={{duration: 100}}>
+    <div class="fixed top-0 left-0 w-full h-full bg-amber-950/40 z-110 flex justify-center items-center" transition:fade={{duration: 100}}>
         <Spinner size={64} weight="bold" color="#441405" class="animate-spin "/>
     </div>
 {/if}
