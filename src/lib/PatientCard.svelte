@@ -39,6 +39,7 @@
                 show: boolean;
                 action?: () => void;
             };
+            deleteOrArchiveRecordControls: boolean;
         },
         formControls: {
             editPatientForm?: {
@@ -66,6 +67,14 @@
             newAppointmentForm?: {
                 preliminaryData: PreliminaryData
                 formAction: string
+            },
+            deleteRecordForm?: {
+                preliminaryData: PreliminaryData
+                formAction: string
+            }
+            archiveRecordForm?: {
+                preliminaryData: PreliminaryData
+                formAction: string
             }
         }
     } = $props()
@@ -78,6 +87,9 @@
     let isEditFormOpen = $state({ value: false })
     let isNewAppointmentFormOpen = $state({ value: false})
     let isCancelAppointmentConfirmationOpen = $state({ value: false })
+    let isDeleteRecordConfirmationOpen = $state({ value: false })
+    let isArchiveRecordConfirmationOpen = $state({ value: false })
+
     let callStatusSelectValue = $state<string>(formControls.editPatientForm?.formSelect?.defaultValue ?? "");
     const selectedLabel = $derived(
         callStatusSelectValue
@@ -99,6 +111,55 @@
     let patientCardTriggerHeight = $state(0)
 </script>
 
+{#if visibleControls.deleteOrArchiveRecordControls && isDeleteRecordConfirmationOpen.value}
+    <div class="absolute top-0 left-0 w-full h-full z-40">
+        <Form
+            isFormOpen={isDeleteRecordConfirmationOpen}
+            formData={{
+                title: "هل انت متأكد من حذف هذا السجل؟",
+                preliminaryData: formControls.deleteRecordForm?.preliminaryData,
+                actionButtonsProperties: {
+                    actionButtonsType: "text",
+                    actionButtonsTexts: {
+                        submit: "حذف",
+                        cancel: "رجوع"
+                    },
+                    actionButtonsColors: {
+                        submit: "bg-red-600",
+                    },
+                },
+                formAction: formControls.deleteRecordForm?.formAction
+            }}
+        >
+            <span></span>
+        </Form>
+    </div>
+{/if}
+{#if visibleControls.deleteOrArchiveRecordControls && isArchiveRecordConfirmationOpen.value}
+    <div class="absolute top-0 left-0 w-full h-full z-40">
+        <Form
+            isFormOpen={isArchiveRecordConfirmationOpen}
+            formData={{
+                title: "هل انت متأكد من ارشفة هذا السجل؟",
+                preliminaryData: formControls.archiveRecordForm?.preliminaryData,
+                actionButtonsProperties: {
+                    actionButtonsType: "text",
+                    actionButtonsTexts: {
+                        submit: "نقل إلى الارشيف",
+                        cancel: "رجوع"
+                    },
+                    actionButtonsColors: {
+                        submit: "bg-red-600",
+                    },
+                },
+                formAction: formControls.archiveRecordForm?.formAction
+            }}
+        >
+            <span></span>
+        </Form>
+    </div>
+{/if}
+
 {#if formControls.editPatientForm && isEditFormOpen.value}
     <Form
         isFormOpen={isEditFormOpen}
@@ -106,11 +167,15 @@
             title: "تحديث بيانات الكشف",
             preliminaryData: formControls.editPatientForm?.preliminaryData ,
             actionButtonsProperties: {
-                actionButtonsType: "icons",
+                actionButtonsType: "text",
                 actionButtonsFunctions: {
                     cancel: () => {
                         callStatusSelectValue = formControls.editPatientForm?.formSelect?.defaultValue ?? ""
                     }
+                },
+                actionButtonsTexts: {
+                    submit: "حفظ",
+                    cancel: "رجوع"
                 }
             },
             formAction: formControls.editPatientForm?.formAction
@@ -223,6 +288,30 @@
                         (نقل إلى متابعات المرضى)
                     </span>
                 </Label.Root>
+            </div>
+        {/if}
+
+        {#if visibleControls.deleteOrArchiveRecordControls}
+            <hr class="w-8/10 border border-orange-900/30 self-center"/>
+
+            <div class="h-32 overflow-hidden transition-all flex flex-col gap-2 justify-center items-center w-full pb-2">
+                <div class="p-3 w-8/10 flex flex-col justify-around md:justify-start items-center gap-3 md:gap-6 md:pl-9">
+                    <button 
+                        type="button" 
+                        class="shadow-md bg-red-600/60 px-4 py-2 flex justify-center items-center w-full md:max-w-[400px] rounded-md font-bold text-orange-50 cursor-pointer hover:brightness-70 transition"
+                        onclick={() => isDeleteRecordConfirmationOpen.value = true}    
+                    >
+                        حذف السجل
+                    </button>
+                    <button 
+                        type="button" 
+                        class="shadow-md bg-gray-600/60 px-4 py-2 flex justify-center items-center w-full md:max-w-[400px] rounded-md font-bold text-orange-50 cursor-pointer hover:brightness-70 transition"
+                        onclick={() => isArchiveRecordConfirmationOpen.value = true}
+                    >
+                        نقل إلى الارشيف
+                    </button>
+
+                </div>
             </div>
         {/if}
     </Form>

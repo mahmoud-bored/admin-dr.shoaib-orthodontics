@@ -22,7 +22,7 @@
         if(dataObj.attended === null) {
             if (dataObj.is_cancelled) return "border-red-600"
         } else if(dataObj.attended === false) {
-            if(dataObj.next_appointment_created !== true) return "border-red-600"
+            if(dataObj.next_appointment === null) return "border-red-600"
         }
         return "border-green-600"
     }
@@ -32,7 +32,7 @@
         if(dataObj.attended === null) {
             if(dataObj.is_cancelled) return "bg-red-600 drop-shadow-md drop-shadow-red-600/70"
         } else if(dataObj.attended === false) {
-            if(dataObj.next_appointment_created !== true) return "bg-red-600 drop-shadow-md drop-shadow-red-600/70"
+            if(dataObj.next_appointment === null) return "bg-red-600 drop-shadow-md drop-shadow-red-600/70"
         }
         return "bg-green-600 w-26"
     }
@@ -41,26 +41,26 @@
         let alertText = ``
         if(dataObj.attended === null) 
                 if(dataObj.is_cancelled) alertText = "تم إلغاء الموعد"
-                    else alertText = `${formatTime(dataObj.appointment_date!)} \n ${formatDate(dataObj.appointment_date!)}`
+                    else alertText = formatTime(dataObj.appointment_date!)
             else if (dataObj.attended === false) alertText = "لم يحضر الموعد"
             else if(dataObj.attended === true) alertText = "تم حضور الموعد"
             
         return alertText
     }
     function getDisabledButtonPlaceholderText(dataObj: DbRow): string {
-        if(dataObj.next_appointment_created) return "تم إنشاء موعد جديد"
+        if(dataObj.next_appointment) return "تم إنشاء موعد جديد"
             else return ""
     }
     function displayNewAppointmentButton(dataObj: DbRow): boolean {
         if(
-            (dataObj.attended === null && dataObj.is_cancelled && !dataObj.next_appointment_created) ||
-            (dataObj.attended === false && !dataObj.next_appointment_created) || 
-            (dataObj.attended === true && !dataObj.next_appointment_created)
+            (dataObj.attended === null && dataObj.is_cancelled && dataObj.next_appointment === null) ||
+            (dataObj.attended === false && dataObj.next_appointment === null) || 
+            (dataObj.attended === true && dataObj.next_appointment === null)
         ) return true
         else return false
     }
     function showDisabledCardButtonPlaceHolder(dataObj: DbRow): boolean {
-        if(dataObj.next_appointment_created) return true
+        if(dataObj.next_appointment) return true
             else return false
     } 
     function showAppointmentAttendanceControls(dataObj: DbRow): boolean {
@@ -68,8 +68,8 @@
             else return false
     }
     function isPatientCardDisabled(dataObj: DbRow): boolean {
-        if(dataObj.next_appointment_created) return true
-            else return false
+        if(dataObj.next_appointment) return true
+        return false
     }
 
     function showFakeLoadingSpinner(): void {
@@ -129,7 +129,7 @@
 
 </script>
 {#if loading}
-    <div class="absolute top-0 left-0 w-full h-full bg-amber-950/40 z-110 flex justify-center items-center" transition:fade={{duration: 100}}>
+    <div class="fixed top-0 left-0 w-full h-full bg-amber-950/40 z-110 flex justify-center items-center" transition:fade={{duration: 100}}>
         <Spinner size={64} weight="bold" color="#441405" class="animate-spin "/>
     </div>
 {/if}
@@ -178,9 +178,9 @@
             </div>
     </Form>
 {/if}
-<div class="p-4 w-full h-full flex justify-center">
+<div class="p-4 w-full flex justify-center">
     <div class="w-full lg:w-8/10 max-w-4xl">
-        <div class="w-full gap-2 flex flex-col pb-8">
+        <div class="w-full gap-2 flex flex-col">
             <div class="w-full h-7 flex justify-center items-center gap-2">
                 <input 
                     type="date" 
@@ -250,7 +250,7 @@
                             },
                             appointmentAttendanceControls: showAppointmentAttendanceControls(formSubmission),
                             newAppointmentButton: displayNewAppointmentButton(formSubmission),
-                            
+                            deleteOrArchiveRecordControls: true,
                         }}
                         formControls={{
                             editPatientForm: {
@@ -280,8 +280,21 @@
                             newAppointmentForm: {
                                 preliminaryData: [
                                     { name: "patient_id", value: formSubmission.patient_id! },
+                                    { name: "appointment_id", value: formSubmission.appointment_id! },
                                 ],
                                 formAction: "?/newAppointment"
+                            },
+                            deleteRecordForm: {
+                                preliminaryData: [
+                                    { name: "appointment_id", value: formSubmission.appointment_id! },
+                                ],
+                                formAction: "?/deleteAppointment"
+                            },
+                            archiveRecordForm: {
+                                preliminaryData: [
+                                    { name: "appointment_id", value: formSubmission.appointment_id! },
+                                ],
+                                formAction: "?/archiveAppointment"
                             }
                         }}
                     />
@@ -293,9 +306,15 @@
                 </div>
                 <hr class="w-8/10 border border-orange-900/40 self-center my-2"/>
             {/if}
+        </div>
+    </div>
+</div>
 
+<hr class="w-full border-10 border-orange-900 self-center mt-10"/>
+<div class="p-4 w-full h-full flex justify-center bg-orange-100">
+    <div class="w-full lg:w-8/10 max-w-4xl">
+        <div class="w-full gap-2 flex flex-col pb-8">
             {#if orderedPastAppointmentsList.length > 0}
-                <hr class="w-8/10 border border-orange-900 self-center my-2"/>
                 <p class="text-2xl pb-8 font-bold text-center text-orange-900">
                     كشوفات سابقة
                 </p>
@@ -310,7 +329,7 @@
                         cardStyle={{
                             patientCardStyle: getPatientCardStyle(formSubmission),
                             alertCardStyle: getAlertCardStyle(formSubmission),
-                            disablePatientCard: true,
+                            disablePatientCard: isPatientCardDisabled(formSubmission),
                         }}
                         texts={{
                             alertCardText: getAlertText(formSubmission),
@@ -323,7 +342,7 @@
                             },
                             appointmentAttendanceControls: showAppointmentAttendanceControls(formSubmission),
                             newAppointmentButton: displayNewAppointmentButton(formSubmission),
-                            
+                            deleteOrArchiveRecordControls: true,
                         }}
                         formControls={{
                             editPatientForm: {

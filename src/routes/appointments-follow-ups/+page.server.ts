@@ -11,7 +11,10 @@ export async function load() {
     const { error: dbErr, data } = await supabase
         .from('patient_appointment')
         .select('*')
-        .eq('long_term', false);
+        .eq('long_term', false)
+        .eq('is_archived', false)
+        .eq('is_deleted', false);
+
     if(dbErr) error(404);
     return {
         formSubmissions: data,
@@ -93,14 +96,14 @@ export const actions = {
         const patient_id = formData.get('patient_id')?.toString()
         const appointmentDate = formData.get('new_appointment_date')?.toString()
         const appointmentTime = formData.get('new_appointment_time')?.toString()
-        if(!patient_id || !appointmentDate || !appointmentTime) redirect(303, '/dbError');
+        const appointment_id = formData.get('appointment_id')?.toString()
+        if(!patient_id || !appointmentDate || !appointmentTime || !appointment_id) redirect(303, '/dbError');
 
-        const { error: dbErr } = await supabase
-            .from('appointment')
-            .insert({
-                patient_id: parseInt(patient_id),
-                appointment_date: getFullDateISOString(appointmentDate, appointmentTime),
-            })
+        const { error: dbErr } = await supabase.rpc('new_related_appointment', {
+            current_patient_id: parseInt(patient_id),
+            current_appointment_id: parseInt(appointment_id),
+            new_appointment_date: getFullDateISOString(appointmentDate, appointmentTime),
+        })
 
         if(dbErr) {
             console.log(dbErr)
@@ -121,6 +124,35 @@ export const actions = {
             new_phone_number,
             new_appointment_date: new_appointment_full_date
         })
+        if(dbErr) {
+            console.log(dbErr)
+            redirect(303, '/dbError');
+        }
+    },
+    deleteAppointment: async ({ request }) => {
+        const formData = await request.formData()
+        const appointment_id = formData.get('appointment_id')?.toString()
+        if(!appointment_id) redirect(303, '/dbError');
+
+        const { error: dbErr } = await supabase.rpc('delete_related_appointment', {
+            current_appointment_id: parseInt(appointment_id)
+        })
+        
+        if(dbErr) {
+            console.log(dbErr)
+            redirect(303, '/dbError');
+        }
+    },
+    archiveAppointment: async ({ request }) => {
+        const formData = await request.formData()
+        const appointment_id = formData.get('appointment_id')?.toString()
+        if(!appointment_id) redirect(303, '/dbError');
+
+        const { error: dbErr } = await supabase
+            .from('appointment')
+            .update({ is_archived: true })
+            .eq('appointment_id', parseInt(appointment_id));
+        
         if(dbErr) {
             console.log(dbErr)
             redirect(303, '/dbError');

@@ -21,6 +21,7 @@
         } else {
             if(dataObj.status === "appointment_refused") alertText = "رفض الحجز"
             else if(dataObj.status === "no_respose") alertText = "لم يتم الرد"
+            else if(dataObj.status === "thinking") alertText = "لم يقرر / متردد"
             else alertText = "جديد"
         }
 
@@ -32,6 +33,7 @@
         } else {
             if(dataObj.status === "appointment_refused") return "border-gray-600"
             else if(dataObj.status === "no_respose") return "border-red-600"
+            else if(dataObj.status === "thinking") return "border-blue-800"
             else return "border-orange-600/70"
         }
     }
@@ -43,6 +45,7 @@
         } else {
             if(dataObj.status === "appointment_refused") return "bg-gray-600"
             else if(dataObj.status === "no_respose") return "bg-red-600"
+            else if(dataObj.status === "thinking") return "bg-blue-800"
             else return "bg-orange-600 shadow-xl shadow-orange-600"
         }
     }
@@ -100,7 +103,7 @@
     
 </script>
 {#if loading}
-    <div class="absolute top-0 left-0 w-full h-full bg-amber-950/40 z-110 flex justify-center items-center" transition:fade={{duration: 100}}>
+    <div class="fixed top-0 left-0 w-full h-full bg-amber-950/40 z-110 flex justify-center items-center" transition:fade={{duration: 100}}>
         <Spinner size={64} weight="bold" color="#441405" class="animate-spin "/>
     </div>
 {/if}
@@ -162,7 +165,7 @@
                             },
                             appointmentAttendanceControls: false,
                             newAppointmentButton: false,
-                            
+                            deleteOrArchiveRecordControls: false
                         }}
                         formControls={{
                             editPatientForm: {
@@ -176,6 +179,7 @@
                                         { value: "appointment_refused", label: "رفض الحجز" },
                                         { value: "no_respose", label: "لم يتم الرد" },
                                         { value: "appointment_booked", label: "تم الحجز" },
+                                        { value: "thinking", label: "لم يقرر / متردد" },
                                     ],
                                     disabled: isPatientFormStatusDisabled(formSubmission),
                                     required: isPatientFormStatusRequired(formSubmission),
