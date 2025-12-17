@@ -6,18 +6,17 @@
 	import PatientCard from '$lib/PatientCard.svelte';
 	import type { Database } from '$lib/database.types.js';
 	import { fade } from 'svelte/transition';
-	import Form from '$lib/Form.svelte';
-	import Plus from 'phosphor-svelte/lib/Plus';
-	import TelInputElmnt from '$lib/TelInputElmnt.svelte';
+    import { Tabs } from "bits-ui";
+    import Airplane from "phosphor-svelte/lib/Airplane";
 
 
     
     type DbRow = Database['public']['Views']['patient_appointment']['Row'];
 
     let { data } = $props();
-    const formSubmissions = data.formSubmissions
+    const patientAppointments = data.patientAppointments
 
-    console.log(formSubmissions)
+    console.log(patientAppointments)
     function getPatientCardStyle(dataObj: DbRow): string {
         if(dataObj.attended === null) {
             if (dataObj.is_cancelled) return "border-red-600"
@@ -46,6 +45,10 @@
             else if(dataObj.attended === true) alertText = "تم حضور الموعد"
             
         return alertText
+    }
+    function disableAppointmentDateEditing(dataObj: DbRow): boolean {
+        if(dataObj.attended !== null || dataObj.is_cancelled) return true
+            else return false
     }
     function getDisabledButtonPlaceholderText(dataObj: DbRow): string {
         if(dataObj.next_appointment_created) return "تم إنشاء موعد جديد"
@@ -97,8 +100,8 @@
         if(todayDateObj > new Date(dataObj.appointment_date!)) return true
             else return false
     }
-    const getFutureData = (date1: string, date2: string) => getOrderedDataList(formSubmissions, 'appointment_date', [date1, date2], checkFutureData, true)
-    const getPastData = (date1: string, date2: string) => getOrderedDataList(formSubmissions, 'appointment_date', [date1, date2], checkPastData)
+    const getFutureData = (date1: string, date2: string) => getOrderedDataList(patientAppointments, 'appointment_date', [date1, date2], checkFutureData, true)
+    const getPastData = (date1: string, date2: string) => getOrderedDataList(patientAppointments, 'appointment_date', [date1, date2], checkPastData)
     let orderedFutureAppointmentsList = $state({} as DbRow[])
     let orderedPastAppointmentsList = $state({} as DbRow[])
     $effect(() => {
@@ -114,8 +117,8 @@
             }
         } else {
             showFakeLoadingSpinner()
-            orderedFutureAppointmentsList = getOrderedDataList(formSubmissions, 'appointment_date', null, checkFutureData, true)
-            orderedPastAppointmentsList = getOrderedDataList(formSubmissions, 'appointment_date', null, checkPastData)
+            orderedFutureAppointmentsList = getOrderedDataList(patientAppointments, 'appointment_date', null, checkFutureData, true)
+            orderedPastAppointmentsList = getOrderedDataList(patientAppointments, 'appointment_date', null, checkPastData)
         }
     })
 
@@ -133,168 +136,225 @@
     </div>
 {/if}
 
-<div class="p-4 w-full h-full flex justify-center">
-    <div class="w-full lg:w-8/10 max-w-4xl">
-        <div class="w-full gap-1 flex flex-col pb-8">
-            <div class="w-full h-7 flex justify-center items-center gap-2">
-                <input 
-                    type="date" 
-                    bind:value={filterDate1}
-                    class="w-full h-full text-sm py-0.5 px-2 bg-orange-100 border border-orange-900 rounded-full flex justify-center items-center hover:bg-orange-200 transition cursor-pointer"
-                />
-                <input 
-                    type="date" 
-                    bind:value={filterDate2}
-                    class="w-full h-full text-sm py-0.5 px-2 bg-orange-100 border border-orange-900 rounded-full flex justify-center items-center hover:bg-orange-200 transition cursor-pointer"
-                />
-                <button 
-                    type="button"
-                    onclick={() => {
-                        filterDate1 = "";
-                        filterDate2 = "";
-                    }}
-                    disabled={(filterDate1 || filterDate2) ? false : true}
-                    class="min-w-9 h-full bg-orange-100 border border-orange-900 rounded-full flex justify-center items-center hover:brightness-80 transition cursor-pointer 
-                        disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:brightness-100"
-                >
-                    <X size={16} weight="bold" color="#441306" />
-                </button>
+
+
+<div class="w-full h-full flex justify-center">
+    <Tabs.Root
+        value="appointments"
+        class="rounded-card border-muted bg-background-alt shadow-card w-full lg:w-8/10 max-w-4xl border pt-3"
+    >
+        <Tabs.List
+        class="rounded-9px  text-orange-900 shadow-mini-inset dark:bg-background grid w-full grid-cols-2 gap-1 p-1 text-md font-semibold leading-[0.01em] dark:border dark:border-neutral-600/30 px-2"
+        >
+            <Tabs.Trigger
+                value="patients"
+                class="data-[state=active]:shadow-mini dark:data-[state=active]:bg-muted h-10 rounded-[7px] py-2 bg-orange-100 data-[state=active]:bg-orange-200 hover:bg-orange-200 transition cursor-pointer"
+            >
+                سجل المتابعين
+            </Tabs.Trigger>
+            <Tabs.Trigger
+                value="appointments"
+                class="data-[state=active]:shadow-mini dark:data-[state=active]:bg-muted h-10 rounded-[7px] py-2 bg-orange-100 data-[state=active]:bg-orange-200 hover:bg-orange-200 transition cursor-pointer"
+            >
+                المواعيد
+            </Tabs.Trigger>
+        </Tabs.List>
+        <Tabs.Content value="patients" class="select-none pt-3">
+            Why?
+        </Tabs.Content>
+        <Tabs.Content value="appointments" class="rounded-b-md">
+            <div class="w-full gap-1 flex flex-col pb-8 p-4">
+                <div class="w-full h-7 flex justify-center items-center gap-2">
+                    <input 
+                        type="date" 
+                        bind:value={filterDate1}
+                        class="w-full h-full text-sm py-0.5 px-2 bg-orange-100 border border-orange-900 rounded-full flex justify-center items-center hover:bg-orange-200 transition cursor-pointer"
+                    />
+                    <input 
+                        type="date" 
+                        bind:value={filterDate2}
+                        class="w-full h-full text-sm py-0.5 px-2 bg-orange-100 border border-orange-900 rounded-full flex justify-center items-center hover:bg-orange-200 transition cursor-pointer"
+                    />
+                    <button 
+                        type="button"
+                        onclick={() => {
+                            filterDate1 = "";
+                            filterDate2 = "";
+                        }}
+                        disabled={(filterDate1 || filterDate2) ? false : true}
+                        class="min-w-9 h-full bg-orange-100 border border-orange-900 rounded-full flex justify-center items-center hover:brightness-80 transition cursor-pointer 
+                            disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:brightness-100"
+                    >
+                        <X size={16} weight="bold" color="#441306" />
+                    </button>
+                </div>
+
+                {#if orderedFutureAppointmentsList.length > 0}
+                    {#each orderedFutureAppointmentsList as appointment, i}
+                        {#if i === 0 || formatDate(appointment.appointment_date!) !== formatDate(orderedFutureAppointmentsList[i - 1].appointment_date!)}
+                            <p class="text-xl nth-2:pt-5 py-2 font-bold text-right text-orange-900">
+                                {
+                                    getDayName(appointment.appointment_date!) + " - " + formatDate(appointment.appointment_date!)
+                                }
+                            </p>
+                        {/if}
+                        <PatientCard 
+                            patientData={appointment}
+                            cardStyle={{
+                                patientCardStyle: getPatientCardStyle(appointment),
+                                alertCardStyle: getAlertCardStyle(appointment),
+                                disablePatientCard: isPatientCardDisabled(appointment),
+                            }}
+                            texts={{
+                                alertCardText: getAlertText(appointment),
+                                disabledButtonPlaceholderText: getDisabledButtonPlaceholderText(appointment),
+                            }}
+                            visibleControls={{
+                                mergePatientCardTriggerActions: false,
+                                disabledCardButtonPlaceHolder: {
+                                    show: showDisabledCardButtonPlaceHolder(appointment),
+                                },
+                                appointmentAttendanceControls: showAppointmentAttendanceControls(appointment),
+                                newAppointmentButton: displayNewAppointmentButton(appointment),
+                                deleteOrArchiveRecordControls: true,
+                            }}
+                            formControls={{
+                                editPatientForm: {
+                                    preliminaryData: [
+                                        { name: "patient_id", value: appointment.patient_id! },
+                                        { name: "appointment_id", value: appointment.appointment_id! },
+                                    ],
+                                    rawDatePicker: {
+                                        defaultValue: appointment.appointment_date!,
+                                        disabled: disableAppointmentDateEditing(appointment),
+                                    },
+                                    formAction: "?/update"
+                                },
+                                appointmentAttendedConfirmationForm: {
+                                    preliminaryData: [
+                                        { name: "patient_id", value: appointment.patient_id! },
+                                        { name: "appointment_id", value: appointment.appointment_id! },
+                                    ],
+                                    formAction: ""
+                                },
+                                cancelAppointmentConfirmationForm: {
+                                    preliminaryData: [
+                                        { name: "appointment_id", value: appointment.appointment_id! },
+                                    ],
+                                    formAction: "?/cancelAppointment"
+                                },
+                                newAppointmentForm: {
+                                    preliminaryData: [
+                                        { name: "patient_id", value: appointment.patient_id! },
+                                    ],
+                                    formAction: "?/newAppointment"
+                                },
+                                deleteRecordForm: {
+                                    preliminaryData: [
+                                        { name: "appointment_id", value: appointment.appointment_id! },
+                                    ],
+                                    formAction: "?/deleteAppointment"
+                                },
+                                archiveRecordForm: {
+                                    preliminaryData: [
+                                        { name: "patient_id", value: appointment.patient_id! },
+                                    ],
+                                    formAction: "?/archiveAppointment"
+                                }
+                            }}
+                        />
+                    {/each}
+                {:else}
+                    <div class="w-full p-4 flex flex-col justify-center items-center gap-3 opacity-75">
+                        <CalendarDots size={64} weight="thin" color="#441306" />
+                        <p class="text-lg font-bold text-orange-950" dir="rtl">لا توجد مواعيد محددة!</p>
+                    </div>
+                {/if}
             </div>
 
+            <hr class="w-full border-10 border-orange-900 self-center mt-8"/>
+            <div class="w-full h-full gap-1 flex flex-col pb-8 p-4 bg-orange-100">
+                {#if orderedPastAppointmentsList.length > 0}
+                    <p class="text-2xl pb-8 font-bold text-center text-orange-900">
+                        مواعيد سابقة
+                    </p>
 
+                    {#each orderedPastAppointmentsList as appointment, i}
+                        {#if i === 0 || formatDate(appointment.appointment_date!) !== formatDate(orderedPastAppointmentsList[i - 1].appointment_date!)}
+                            <p class="text-xl not-nth-2:py-3 font-bold text-right text-orange-900">
+                                { getDayName(appointment.appointment_date!) + " - " + formatDate(appointment.appointment_date!) }
+                            </p>
+                        {/if}
+                        <PatientCard 
+                            patientData={appointment}
+                            cardStyle={{
+                                patientCardStyle: getPatientCardStyle(appointment),
+                                alertCardStyle: getAlertCardStyle(appointment),
+                                disablePatientCard: true,
+                            }}
+                            texts={{
+                                alertCardText: getAlertText(appointment),
+                                disabledButtonPlaceholderText: getDisabledButtonPlaceholderText(appointment),
+                            }}
+                            visibleControls={{
+                                mergePatientCardTriggerActions: false,
+                                disabledCardButtonPlaceHolder: {
+                                    show: showDisabledCardButtonPlaceHolder(appointment),
+                                },
+                                appointmentAttendanceControls: showAppointmentAttendanceControls(appointment),
+                                newAppointmentButton: displayNewAppointmentButton(appointment),
+                                deleteOrArchiveRecordControls: true,
+                            }}
+                            formControls={{
+                                editPatientForm: {
+                                    preliminaryData: [
+                                        { name: "patient_id", value: appointment.patient_id! },
+                                        { name: "appointment_id", value: appointment.appointment_id! },
+                                    ],
+                                    rawDatePicker: {
+                                        defaultValue: appointment.appointment_date!,
+                                        disabled: disableAppointmentDateEditing(appointment),
+                                    },
+                                    formAction: "?/update"
+                                },
+                                appointmentAttendedConfirmationForm: {
+                                    preliminaryData: [
+                                        { name: "patient_id", value: appointment.patient_id! },
+                                        { name: "appointment_id", value: appointment.appointment_id! },
+                                    ],
+                                    formAction: ""
+                                },
+                                cancelAppointmentConfirmationForm: {
+                                    preliminaryData: [
+                                        { name: "appointment_id", value: appointment.appointment_id! },
+                                    ],
+                                    formAction: "?/cancelAppointment"
+                                },
+                                newAppointmentForm: {
+                                    preliminaryData: [
+                                        { name: "patient_id", value: appointment.patient_id! },
+                                    ],
+                                    formAction: "?/newAppointment"
+                                },
+                                deleteRecordForm: {
+                                    preliminaryData: [
+                                        { name: "appointment_id", value: appointment.appointment_id! },
+                                    ],
+                                    formAction: "?/deleteAppointment"
+                                },
+                                archiveRecordForm: {
+                                    preliminaryData: [
+                                        { name: "patient_id", value: appointment.patient_id! },
+                                    ],
+                                    formAction: "?/archiveAppointment"
+                                }
+                            }}
+                        />
+                    {/each}
+                {/if}
 
-            {#if orderedFutureAppointmentsList.length > 0}
-                {#each orderedFutureAppointmentsList as formSubmission, i}
-                    {#if i === 0 || formatDate(formSubmission.appointment_date!) !== formatDate(orderedFutureAppointmentsList[i - 1].appointment_date!)}
-                        <p class="text-xl py-2 font-bold text-right text-orange-900">
-                            {
-                                formatDate(formSubmission.appointment_date!) === todayDateString ? "اليوم" :
-                                formatDate(formSubmission.appointment_date!) === tomorrowDateString ? "غدا" :
-                                getDayName(formSubmission.appointment_date!) + " - " + formatDate(formSubmission.appointment_date!)
-                            }
-                        </p>
-                    {/if}
-                    <PatientCard 
-                        patientData={formSubmission}
-                        cardStyle={{
-                            patientCardStyle: getPatientCardStyle(formSubmission),
-                            alertCardStyle: getAlertCardStyle(formSubmission),
-                            disablePatientCard: isPatientCardDisabled(formSubmission),
-                        }}
-                        texts={{
-                            alertCardText: getAlertText(formSubmission),
-                            disabledButtonPlaceholderText: getDisabledButtonPlaceholderText(formSubmission),
-                        }}
-                        visibleControls={{
-                            mergePatientCardTriggerActions: true,
-                            disabledCardButtonPlaceHolder: {
-                                show: showDisabledCardButtonPlaceHolder(formSubmission),
-                            },
-                            appointmentAttendanceControls: showAppointmentAttendanceControls(formSubmission),
-                            newAppointmentButton: displayNewAppointmentButton(formSubmission),
-                            deleteOrArchiveRecordControls: false,
-                        }}
-                        formControls={{
-                            editPatientForm: {
-                                preliminaryData: [
-                                    { name: "patient_id", value: formSubmission.patient_id! },
-                                    { name: "appointment_id", value: formSubmission.appointment_id! },
-                                ],
-                                formAction: "?/update"
-                            },
-                            appointmentAttendedConfirmationForm: {
-                                preliminaryData: [
-                                    { name: "patient_id", value: formSubmission.patient_id! },
-                                    { name: "appointment_id", value: formSubmission.appointment_id! },
-                                ],
-                                formAction: ""
-                            },
-                            cancelAppointmentConfirmationForm: {
-                                preliminaryData: [
-                                    { name: "appointment_id", value: formSubmission.appointment_id! },
-                                ],
-                                formAction: "?/cancelAppointment"
-                            },
-                            newAppointmentForm: {
-                                preliminaryData: [
-                                    { name: "patient_id", value: formSubmission.patient_id! },
-                                ],
-                                formAction: "?/newAppointment"
-                            }
-                        }}
-                    />
-                {/each}
-            {:else}
-                <div class="w-full p-4 flex flex-col justify-center items-center gap-3 opacity-75">
-                    <CalendarDots size={64} weight="thin" color="#441306" />
-                    <p class="text-lg font-bold text-orange-950" dir="rtl">لا توجد مواعيد محددة!</p>
-                </div>
-            {/if}
-            
-            {#if orderedPastAppointmentsList.length > 0}
-                <hr class="w-8/10 border border-orange-900 self-center my-2"/>
-                <p class="text-2xl pb-8 font-bold text-center text-orange-900">
-                    مواعيد سابقة
-                </p>
-                {#each orderedPastAppointmentsList as formSubmission, i}
-                    {#if i === 0 || formatDate(formSubmission.appointment_date!) !== formatDate(orderedPastAppointmentsList[i - 1].appointment_date!)}
-                        <p class="text-xl py-2 font-bold text-right text-orange-900">
-                            { getDayName(formSubmission.appointment_date!) + " - " + formatDate(formSubmission.appointment_date!) }
-                        </p>
-                    {/if}
-                    <PatientCard 
-                        patientData={formSubmission}
-                        cardStyle={{
-                            patientCardStyle: getPatientCardStyle(formSubmission),
-                            alertCardStyle: getAlertCardStyle(formSubmission),
-                            disablePatientCard: true,
-                        }}
-                        texts={{
-                            alertCardText: getAlertText(formSubmission),
-                            disabledButtonPlaceholderText: getDisabledButtonPlaceholderText(formSubmission),
-                        }}
-                        visibleControls={{
-                            mergePatientCardTriggerActions: true,
-                            disabledCardButtonPlaceHolder: {
-                                show: showDisabledCardButtonPlaceHolder(formSubmission),
-                            },
-                            appointmentAttendanceControls: showAppointmentAttendanceControls(formSubmission),
-                            newAppointmentButton: displayNewAppointmentButton(formSubmission),
-                            deleteOrArchiveRecordControls: false,
-                        }}
-                        formControls={{
-                            editPatientForm: {
-                                preliminaryData: [
-                                    { name: "patient_id", value: formSubmission.patient_id! },
-                                    { name: "appointment_id", value: formSubmission.appointment_id! },
-                                ],
-                                formAction: "?/update"
-                            },
-                            appointmentAttendedConfirmationForm: {
-                                preliminaryData: [
-                                    { name: "patient_id", value: formSubmission.patient_id! },
-                                    { name: "appointment_id", value: formSubmission.appointment_id! },
-                                ],
-                                formAction: ""
-                            },
-                            cancelAppointmentConfirmationForm: {
-                                preliminaryData: [
-                                    { name: "appointment_id", value: formSubmission.appointment_id! },
-                                ],
-                                formAction: "?/cancelAppointment"
-                            },
-                            newAppointmentForm: {
-                                preliminaryData: [
-                                    { name: "patient_id", value: formSubmission.patient_id! },
-                                ],
-                                formAction: "?/newAppointment"
-                            }
-                        }}
-                    />
-                {/each}
-            {/if}
-        </div>
-    </div>
-    
-
+            </div>
+        </Tabs.Content>
+  </Tabs.Root>
 </div>
+

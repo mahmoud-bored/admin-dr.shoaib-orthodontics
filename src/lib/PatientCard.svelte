@@ -54,6 +54,10 @@
                 formCheckbox?: {
                     name: string,
                 },
+                rawDatePicker?: {
+                    defaultValue: string,
+                    disabled: boolean,
+                }
                 formAction: string
             },
             appointmentAttendedConfirmationForm?: {
@@ -109,12 +113,17 @@
     }
 
     let patientCardTriggerHeight = $state(0)
+    $effect(() => {
+        if(formControls.editPatientForm?.rawDatePicker?.defaultValue)
+            console.log(new Date(formControls.editPatientForm?.rawDatePicker?.defaultValue).toTimeString().slice(0, 5))
+
+    })
 </script>
 
 {#if visibleControls.deleteOrArchiveRecordControls && isDeleteRecordConfirmationOpen.value}
     <div class="absolute top-0 left-0 w-full h-full z-40">
         <Form
-            isFormOpen={isDeleteRecordConfirmationOpen}
+            bind:isFormOpen={isDeleteRecordConfirmationOpen}
             formData={{
                 title: "هل انت متأكد من حذف هذا السجل؟",
                 preliminaryData: formControls.deleteRecordForm?.preliminaryData,
@@ -138,7 +147,7 @@
 {#if visibleControls.deleteOrArchiveRecordControls && isArchiveRecordConfirmationOpen.value}
     <div class="absolute top-0 left-0 w-full h-full z-40">
         <Form
-            isFormOpen={isArchiveRecordConfirmationOpen}
+            bind:isFormOpen={isArchiveRecordConfirmationOpen}
             formData={{
                 title: "هل انت متأكد من ارشفة هذا السجل؟",
                 preliminaryData: formControls.archiveRecordForm?.preliminaryData,
@@ -162,7 +171,7 @@
 
 {#if formControls.editPatientForm && isEditFormOpen.value}
     <Form
-        isFormOpen={isEditFormOpen}
+        bind:isFormOpen={isEditFormOpen}
         formData={{
             title: "تحديث بيانات الكشف",
             preliminaryData: formControls.editPatientForm?.preliminaryData ,
@@ -259,7 +268,31 @@
                 />
             </div>
         {/if}
-
+        {#if formControls.editPatientForm.rawDatePicker}
+            <div 
+                class="transition-all flex flex-col gap-2 justify-center items-center w-full pb-2" 
+                class:opacity-60={formControls.editPatientForm.rawDatePicker.disabled}
+            >
+                <label for="new_appointment_date" class="w-full text-right mt-2 text-orange-900 font-bold">تاريخ الحجز</label>
+                <input 
+                    class="bg-orange-100 w-9/10 p-2 rounded-md"
+                    type="date" 
+                    name="new_appointment_date" 
+                    value="{ new Date(formControls.editPatientForm.rawDatePicker.defaultValue).toISOString().split('T')[0] }"
+                    disabled={formControls.editPatientForm.rawDatePicker.disabled}
+                    required
+                />
+                <label for="new_appointment_time" class="w-full text-right text-orange-900 font-bold">موعد الحجز</label>
+                <input 
+                    class="bg-orange-100 w-9/10 p-2 rounded-md" 
+                    type="time" 
+                    name="new_appointment_time" 
+                    value="{ new Date(formControls.editPatientForm?.rawDatePicker?.defaultValue).toTimeString().slice(0, 5) }"
+                    disabled={formControls.editPatientForm.rawDatePicker.disabled}
+                    required
+                />
+            </div>
+        {/if}
         {#if formControls.editPatientForm?.formCheckbox?.name}
             <div class="flex items-center space-x-3 mr-3 mt-2" dir="rtl">
                 <Checkbox.Root
@@ -319,7 +352,7 @@
 
 {#if formControls.appointmentAttendedConfirmationForm && appointmentAttendedConfirmation.value}
     <Form
-        isFormOpen={appointmentAttendedConfirmation}
+        bind:isFormOpen={appointmentAttendedConfirmation}
         formData={{
             title: "",
             preliminaryData: formControls.appointmentAttendedConfirmationForm?.preliminaryData,
@@ -356,7 +389,7 @@
 
 {#if formControls.cancelAppointmentConfirmationForm && isCancelAppointmentConfirmationOpen.value}
     <Form
-        isFormOpen={isCancelAppointmentConfirmationOpen}
+        bind:isFormOpen={isCancelAppointmentConfirmationOpen}
         formData={{
             title: "هل انت متأكد من إلغاء الموعد؟",
             preliminaryData: formControls.cancelAppointmentConfirmationForm?.preliminaryData,
@@ -378,7 +411,7 @@
 {/if}
 {#if formControls.newAppointmentForm && isNewAppointmentFormOpen.value}
     <Form
-        isFormOpen={isNewAppointmentFormOpen}
+        bind:isFormOpen={isNewAppointmentFormOpen}
         formData={{
             title: "انشاء موعد جديد",
             preliminaryData: formControls.newAppointmentForm?.preliminaryData,
