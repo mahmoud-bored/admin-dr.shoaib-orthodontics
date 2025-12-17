@@ -138,7 +138,7 @@
 {/if}
 {#if isNewPatientAppointmentFormOpen.value}
     <Form
-        isFormOpen={isNewPatientAppointmentFormOpen}
+        bind:isFormOpen={isNewPatientAppointmentFormOpen}
         formData={{
             title: "كشف جديد",
             preliminaryData: [],
