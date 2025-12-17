@@ -12,13 +12,15 @@ export async function load() {
         .from('patient_appointment')
         .select('*')
         .eq('is_archived', false)
-        .eq('is_deleted', false)
+        .eq('is_appointment_deleted', false)
+        .eq('is_patient_deleted', false)
         .eq('long_term', true);
 
     const { error: dbErr2, data: patientsData } = await supabase
         .from('patient')
         .select('*')
         .eq('is_archived', false)
+        .eq('is_deleted', false)
         .eq('long_term', true);
 
     if(dbErr || dbErr2) error(404);
@@ -119,14 +121,14 @@ export const actions = {
         const patient_id = formData.get('patient_id')?.toString()
         const appointmentDate = formData.get('new_appointment_date')?.toString()
         const appointmentTime = formData.get('new_appointment_time')?.toString()
-        if(!patient_id || !appointmentDate || !appointmentTime) redirect(303, '/dbError');
+        const appointment_id = formData.get('appointment_id')?.toString()
+        if(!patient_id || !appointmentDate || !appointmentTime || !appointment_id) redirect(303, '/dbError');
 
-        const { error: dbErr } = await supabase
-            .from('appointment')
-            .insert({
-                patient_id: parseInt(patient_id),
-                appointment_date: getFullDateISOString(appointmentDate, appointmentTime),
-            })
+        const { error: dbErr } = await supabase.rpc('new_related_appointment', {
+            current_patient_id: parseInt(patient_id),
+            current_appointment_id: parseInt(appointment_id),
+            new_appointment_date: getFullDateISOString(appointmentDate, appointmentTime),
+        })
 
         if(dbErr) {
             console.log(dbErr)
@@ -157,6 +159,94 @@ export const actions = {
             .update({ is_archived: true })
             .eq('patient_id', parseInt(patient_id));
         
+        if(dbErr) {
+            console.log(dbErr)
+            redirect(303, '/dbError');
+        }
+    },
+    deletePatient: async ({ request }) => {
+        const formData = await request.formData()
+        const patient_id = formData.get('patient_id')?.toString()
+        if(!patient_id) redirect(303, '/dbError');
+
+        const { error: dbErr } = await supabase
+            .from('patient')
+            .update({ is_deleted: true })
+            .eq('patient_id', parseInt(patient_id));
+        
+        if(dbErr) {
+            console.log(dbErr)
+            redirect(303, '/dbError');
+        }
+    },
+    archivePatient: async ({ request }) => {
+        const formData = await request.formData()
+        const patient_id = formData.get('patient_id')?.toString()
+        if(!patient_id) redirect(303, '/dbError');
+
+        const { error: dbErr } = await supabase
+            .from('patient')
+            .update({ is_archived: true })
+            .eq('patient_id', parseInt(patient_id));
+        
+        if(dbErr) {
+            console.log(dbErr)
+            redirect(303, '/dbError');
+        }
+    },
+    updatePatient: async ({ request }) => {
+        const formData = await request.formData()
+        const patient_id = formData.get('patient_id')?.toString()
+        const full_name = formData.get('full_name')?.toString()
+        const phone_number = formData.get('phone_number')?.toString()
+        if(!patient_id || !full_name || !phone_number) redirect(303, '/dbError');
+
+        const { error: dbErr } = await supabase
+            .from('patient')
+            .update({ 
+                full_name, 
+                phone_number 
+            })
+            .eq('patient_id', parseInt(patient_id));
+        
+        if(dbErr) {
+            console.log(dbErr)
+            redirect(303, '/dbError');
+        }
+    },
+    newPatientAppointment: async ({ request }) => {
+        const formData = await request.formData()
+        const patient_id = formData.get('patient_id')?.toString()
+        const appointmentDate = formData.get('new_appointment_date')?.toString()
+        const appointmentTime = formData.get('new_appointment_time')?.toString()
+        if(!patient_id || !appointmentDate || !appointmentTime) redirect(303, '/dbError');
+
+        const { error: dbErr } = await supabase
+            .from('appointment')
+            .insert({
+                patient_id: parseInt(patient_id),
+                appointment_date: getFullDateISOString(appointmentDate, appointmentTime),
+            })
+
+        if(dbErr) {
+            console.log(dbErr)
+            redirect(303, '/dbError');
+        }
+    },
+    newPatient: async ({ request }) => {
+        const formData = await request.formData()
+        const full_name = formData.get('full_name')?.toString()
+        const phone_number = formData.get('phone_number')?.toString()
+        if(!full_name || !phone_number) redirect(303, '/dbError');
+
+        const { error: dbErr } = await supabase
+            .from('patient')
+            .insert({
+                full_name,
+                phone_number,
+                long_term: true
+            })
+
         if(dbErr) {
             console.log(dbErr)
             redirect(303, '/dbError');

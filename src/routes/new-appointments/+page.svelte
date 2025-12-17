@@ -22,6 +22,7 @@
             if(dataObj.status === "appointment_refused") alertText = "رفض الحجز"
             else if(dataObj.status === "no_respose") alertText = "لم يتم الرد"
             else if(dataObj.status === "thinking") alertText = "لم يقرر / متردد"
+            else if(dataObj.status === "redundant") alertText = "مكرر"
             else alertText = "جديد"
         }
 
@@ -31,7 +32,7 @@
         if(dataObj.appointment_id) {
             return "border-green-600"
         } else {
-            if(dataObj.status === "appointment_refused") return "border-gray-600"
+            if(dataObj.status === "appointment_refused" || dataObj.status === "redundant") return "border-gray-600"
             else if(dataObj.status === "no_respose") return "border-red-600"
             else if(dataObj.status === "thinking") return "border-blue-800"
             else return "border-orange-600/70"
@@ -43,7 +44,7 @@
         if(dataObj.appointment_id) {
             return "bg-green-600 w-26"
         } else {
-            if(dataObj.status === "appointment_refused") return "bg-gray-600"
+            if(dataObj.status === "appointment_refused" || dataObj.status === "redundant") return "bg-gray-600"
             else if(dataObj.status === "no_respose") return "bg-red-600"
             else if(dataObj.status === "thinking") return "bg-blue-800"
             else return "bg-orange-600 shadow-xl shadow-orange-600"
@@ -56,7 +57,7 @@
             else return false
     } 
     function isPatientCardDisabled(dataObj: DbRow): boolean {
-        if(dataObj.appointment_id || dataObj.status === "appointment_refused") return true
+        if(dataObj.appointment_id || dataObj.status === "appointment_refused" || dataObj.status === "redundant") return true
             else return false
     }
     function isPatientFormStatusDisabled(dataObj: DbRow): boolean {
@@ -107,6 +108,9 @@
         <Spinner size={64} weight="bold" color="#441405" class="animate-spin "/>
     </div>
 {/if}
+{#snippet cardIcon()}
+    <MobileDevice size={32} weight="fill" color="#441306" style="rotate: 180deg;" />
+{/snippet}
 <div class="p-4 w-full h-full flex justify-center">
     <div class="w-full lg:w-8/10 max-w-4xl">
         <div class="w-full gap-2 flex flex-col pb-8">
@@ -151,6 +155,7 @@
                             patientCardStyle: getPatientCardStyle(formSubmission),
                             alertCardStyle: getAlertCardStyle(formSubmission),
                             disablePatientCard: isPatientCardDisabled(formSubmission),
+                            cardIcon: cardIcon
                         }}
                         texts={{
                             alertCardText: getAlertText(formSubmission),
@@ -180,6 +185,7 @@
                                         { value: "no_respose", label: "لم يتم الرد" },
                                         { value: "appointment_booked", label: "تم الحجز" },
                                         { value: "thinking", label: "لم يقرر / متردد" },
+                                        { value: "redundant", label: "مكرر" },
                                     ],
                                     disabled: isPatientFormStatusDisabled(formSubmission),
                                     required: isPatientFormStatusRequired(formSubmission),

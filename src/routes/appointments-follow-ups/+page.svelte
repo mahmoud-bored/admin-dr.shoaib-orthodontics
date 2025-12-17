@@ -9,6 +9,7 @@
 	import Form from '$lib/Form.svelte';
 	import Plus from 'phosphor-svelte/lib/Plus';
 	import TelInputElmnt from '$lib/TelInputElmnt.svelte';
+	import Clock from 'phosphor-svelte/lib/Clock';
 
 
     
@@ -111,9 +112,11 @@
             if(filterDate1 > filterDate2) {
                 orderedFutureAppointmentsList = getFutureData(filterDate1, filterDate2)
                 orderedPastAppointmentsList = getPastData(filterDate2, filterDate1)
+                console.log('Newer: ', filterDate1,'Older: ', filterDate2)
             } else {
                 orderedFutureAppointmentsList = getFutureData(filterDate2, filterDate1)
                 orderedPastAppointmentsList = getPastData(filterDate1, filterDate2)
+                console.log('Newer: ', filterDate2, 'Older: ', filterDate1)
             }
         } else {
             showFakeLoadingSpinner()
@@ -181,6 +184,10 @@
             </div>
     </Form>
 {/if}
+
+{#snippet cardIcon()}
+    <Clock size={32} weight="fill" color="#441306" />
+{/snippet}
 <div class="p-4 w-full flex justify-center">
     <div class="w-full lg:w-8/10 max-w-4xl">
         <div class="w-full gap-2 flex flex-col">
@@ -241,6 +248,7 @@
                             patientCardStyle: getPatientCardStyle(appointment),
                             alertCardStyle: getAlertCardStyle(appointment),
                             disablePatientCard: isPatientCardDisabled(appointment),
+                            cardIcon: cardIcon
                         }}
                         texts={{
                             alertCardText: getAlertText(appointment),
@@ -317,7 +325,7 @@
 </div>
 
 <hr class="w-full border-10 border-orange-900 self-center mt-10"/>
-<div class="p-4 w-full h-full flex justify-center bg-orange-100">
+<div class="p-4 w-full min-h-full flex justify-center bg-orange-100">
     <div class="w-full lg:w-8/10 max-w-4xl">
         <div class="w-full gap-2 flex flex-col pb-8">
             {#if orderedPastAppointmentsList.length > 0}
@@ -336,6 +344,7 @@
                             patientCardStyle: getPatientCardStyle(appointment),
                             alertCardStyle: getAlertCardStyle(appointment),
                             disablePatientCard: isPatientCardDisabled(appointment),
+                            cardIcon: cardIcon
                         }}
                         texts={{
                             alertCardText: getAlertText(appointment),

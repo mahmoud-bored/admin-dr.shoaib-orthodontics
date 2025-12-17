@@ -13,7 +13,8 @@ export async function load() {
         .select('*')
         .eq('long_term', false)
         .eq('is_archived', false)
-        .eq('is_deleted', false);
+        .eq('is_patient_deleted', false)
+        .eq('is_appointment_deleted', false);
 
     if(dbErr) error(404);
     return {
