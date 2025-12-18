@@ -1,7 +1,6 @@
 <script lang="ts">
     import { Checkbox, Label, Select } from "bits-ui";
     import CaretUpDown from "phosphor-svelte/lib/CaretUpDown";
-    import MobileDevice from 'phosphor-svelte/lib/DeviceMobileSpeaker'
 	import Phone from 'phosphor-svelte/lib/Phone';
 	import WhatsappLogo from 'phosphor-svelte/lib/WhatsappLogo';
     import PencilSimple from 'phosphor-svelte/lib/PencilSimple'
@@ -10,9 +9,11 @@
 	import Plus from "phosphor-svelte/lib/Plus";
 	import Form from "./Form.svelte";
 	import type { Database } from "$lib/database.types";
+	import type { Snippet } from "svelte";
 
     type DbRow1 = Database['public']['Views']['patient_form_submissions']['Row'];
     type DbRow2 = Database['public']['Views']['patient_appointment']['Row'];
+    type DbRow3 = Database['public']['Tables']['patient']['Row'];
     type PreliminaryData = { name: string; value: string | number }[]
     let { 
         patientData,
@@ -21,14 +22,15 @@
         visibleControls,
         formControls
     }: { 
-        patientData: DbRow1 | DbRow2;
+        patientData: DbRow1 | DbRow2 | DbRow3;
         cardStyle: {
             patientCardStyle: string;
             alertCardStyle: string;
             disablePatientCard: boolean;
+            cardIcon: Snippet;
         };
         texts: {
-            alertCardText: string;
+            alertCardText: string | null;
             disabledButtonPlaceholderText: string;
         },
         visibleControls: {
@@ -39,6 +41,7 @@
                 show: boolean;
                 action?: () => void;
             };
+            deleteOrArchiveRecordControls: boolean;
         },
         formControls: {
             editPatientForm?: {
@@ -53,6 +56,10 @@
                 formCheckbox?: {
                     name: string,
                 },
+                rawDatePicker?: {
+                    defaultValue: string,
+                    disabled: boolean,
+                }
                 formAction: string
             },
             appointmentAttendedConfirmationForm?: {
@@ -64,6 +71,14 @@
                 formAction: string
             },
             newAppointmentForm?: {
+                preliminaryData: PreliminaryData
+                formAction: string
+            },
+            deleteRecordForm?: {
+                preliminaryData: PreliminaryData
+                formAction: string
+            }
+            archiveRecordForm?: {
                 preliminaryData: PreliminaryData
                 formAction: string
             }
@@ -78,6 +93,9 @@
     let isEditFormOpen = $state({ value: false })
     let isNewAppointmentFormOpen = $state({ value: false})
     let isCancelAppointmentConfirmationOpen = $state({ value: false })
+    let isDeleteRecordConfirmationOpen = $state({ value: false })
+    let isArchiveRecordConfirmationOpen = $state({ value: false })
+
     let callStatusSelectValue = $state<string>(formControls.editPatientForm?.formSelect?.defaultValue ?? "");
     const selectedLabel = $derived(
         callStatusSelectValue
@@ -97,20 +115,95 @@
     }
 
     let patientCardTriggerHeight = $state(0)
+
+    let patientCardId = $state("")
+    $effect(() => {
+        const tempData = patientData as (DbRow2 | DbRow1)
+        if (tempData.appointment_id) {
+            patientCardId = tempData.appointment_id.toString() ?? ""
+        } else {
+            patientCardId = ""
+        }
+    })
 </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+{#if visibleControls.deleteOrArchiveRecordControls && isDeleteRecordConfirmationOpen.value}
+    <div class="absolute top-0 left-0 w-full h-full z-40">
+        <Form
+            bind:isFormOpen={isDeleteRecordConfirmationOpen}
+            formData={{
+                title: "هل انت متأكد من حذف هذا السجل؟",
+                preliminaryData: formControls.deleteRecordForm?.preliminaryData,
+                actionButtonsProperties: {
+                    actionButtonsType: "text",
+                    actionButtonsTexts: {
+                        submit: "حذف",
+                        cancel: "رجوع"
+                    },
+                    actionButtonsColors: {
+                        submit: "bg-red-600",
+                    },
+                },
+                formAction: formControls.deleteRecordForm?.formAction
+            }}
+        >
+            <span></span>
+        </Form>
+    </div>
+{/if}
+{#if visibleControls.deleteOrArchiveRecordControls && isArchiveRecordConfirmationOpen.value}
+    <div class="absolute top-0 left-0 w-full h-full z-40">
+        <Form
+            bind:isFormOpen={isArchiveRecordConfirmationOpen}
+            formData={{
+                title: "هل انت متأكد من ارشفة هذا السجل؟",
+                preliminaryData: formControls.archiveRecordForm?.preliminaryData,
+                actionButtonsProperties: {
+                    actionButtonsType: "text",
+                    actionButtonsTexts: {
+                        submit: "نقل إلى الارشيف",
+                        cancel: "رجوع"
+                    },
+                    actionButtonsColors: {
+                        submit: "bg-red-600",
+                    },
+                },
+                formAction: formControls.archiveRecordForm?.formAction
+            }}
+        >
+            <span></span>
+        </Form>
+    </div>
+{/if}
 
 {#if formControls.editPatientForm && isEditFormOpen.value}
     <Form
-        isFormOpen={isEditFormOpen}
+        bind:isFormOpen={isEditFormOpen}
         formData={{
             title: "تحديث بيانات الكشف",
             preliminaryData: formControls.editPatientForm?.preliminaryData ,
             actionButtonsProperties: {
-                actionButtonsType: "icons",
+                actionButtonsType: "text",
                 actionButtonsFunctions: {
                     cancel: () => {
                         callStatusSelectValue = formControls.editPatientForm?.formSelect?.defaultValue ?? ""
                     }
+                },
+                actionButtonsTexts: {
+                    submit: "حفظ",
+                    cancel: "رجوع"
                 }
             },
             formAction: formControls.editPatientForm?.formAction
@@ -194,7 +287,35 @@
                 />
             </div>
         {/if}
-
+        {#if formControls.editPatientForm.rawDatePicker}
+            <div 
+                class="transition-all flex flex-col gap-2 justify-center items-center w-full pb-2" 
+                class:opacity-60={formControls.editPatientForm.rawDatePicker.disabled}
+            >
+                <label for="new_appointment_date" class="w-full text-right mt-2 text-orange-900 font-bold">تاريخ الحجز</label>
+                {#if formControls.editPatientForm.rawDatePicker.disabled}
+                    <input type="date" name="new_appointment_date" value="{ new Date(formControls.editPatientForm.rawDatePicker.defaultValue).toISOString().split('T')[0] }" hidden />
+                    <input type="time" name="new_appointment_time" value="{ new Date(formControls.editPatientForm.rawDatePicker.defaultValue).toTimeString().slice(0, 5) }" hidden />
+                {/if}
+                <input 
+                    class="bg-orange-100 w-9/10 p-2 rounded-md"
+                    type="date" 
+                    name="new_appointment_date" 
+                    value="{ new Date(formControls.editPatientForm.rawDatePicker.defaultValue).toISOString().split('T')[0] }"
+                    disabled={formControls.editPatientForm.rawDatePicker.disabled}
+                    required
+                />
+                <label for="new_appointment_time" class="w-full text-right text-orange-900 font-bold">موعد الحجز</label>
+                <input 
+                    class="bg-orange-100 w-9/10 p-2 rounded-md" 
+                    type="time" 
+                    name="new_appointment_time" 
+                    value="{ new Date(formControls.editPatientForm?.rawDatePicker?.defaultValue).toTimeString().slice(0, 5) }"
+                    disabled={formControls.editPatientForm.rawDatePicker.disabled}
+                    required
+                />
+            </div>
+        {/if}
         {#if formControls.editPatientForm?.formCheckbox?.name}
             <div class="flex items-center space-x-3 mr-3 mt-2" dir="rtl">
                 <Checkbox.Root
@@ -225,12 +346,36 @@
                 </Label.Root>
             </div>
         {/if}
+
+        {#if visibleControls.deleteOrArchiveRecordControls}
+            <hr class="w-8/10 border border-orange-900/30 self-center"/>
+
+            <div class="h-32 overflow-hidden transition-all flex flex-col gap-2 justify-center items-center w-full pb-2">
+                <div class="p-3 w-8/10 flex flex-col justify-around md:justify-start items-center gap-3 md:gap-6 md:pl-9">
+                    <button 
+                        type="button" 
+                        class="shadow-md bg-red-600/60 px-4 py-2 flex justify-center items-center w-full md:max-w-[400px] rounded-md font-bold text-orange-50 cursor-pointer hover:brightness-70 transition"
+                        onclick={() => isDeleteRecordConfirmationOpen.value = true}    
+                    >
+                        حذف السجل
+                    </button>
+                    <button 
+                        type="button" 
+                        class="shadow-md bg-gray-600/60 px-4 py-2 flex justify-center items-center w-full md:max-w-[400px] rounded-md font-bold text-orange-50 cursor-pointer hover:brightness-70 transition"
+                        onclick={() => isArchiveRecordConfirmationOpen.value = true}
+                    >
+                        نقل إلى الارشيف
+                    </button>
+
+                </div>
+            </div>
+        {/if}
     </Form>
 {/if}
 
 {#if formControls.appointmentAttendedConfirmationForm && appointmentAttendedConfirmation.value}
     <Form
-        isFormOpen={appointmentAttendedConfirmation}
+        bind:isFormOpen={appointmentAttendedConfirmation}
         formData={{
             title: "",
             preliminaryData: formControls.appointmentAttendedConfirmationForm?.preliminaryData,
@@ -267,7 +412,7 @@
 
 {#if formControls.cancelAppointmentConfirmationForm && isCancelAppointmentConfirmationOpen.value}
     <Form
-        isFormOpen={isCancelAppointmentConfirmationOpen}
+        bind:isFormOpen={isCancelAppointmentConfirmationOpen}
         formData={{
             title: "هل انت متأكد من إلغاء الموعد؟",
             preliminaryData: formControls.cancelAppointmentConfirmationForm?.preliminaryData,
@@ -289,7 +434,7 @@
 {/if}
 {#if formControls.newAppointmentForm && isNewAppointmentFormOpen.value}
     <Form
-        isFormOpen={isNewAppointmentFormOpen}
+        bind:isFormOpen={isNewAppointmentFormOpen}
         formData={{
             title: "انشاء موعد جديد",
             preliminaryData: formControls.newAppointmentForm?.preliminaryData,
@@ -316,19 +461,19 @@
     </Form>
 {/if}
 
-<div class="z-10 flex justify-center w-full" id="{ patientData.appointment_id ? patientData.appointment_id.toString() : ""}">
+<div class="z-10 flex justify-center w-full" id="{ patientCardId }">
     <button 
         class={[
-            "peer w-full p-3 bg-orange-200 hover:bg-orange-300 transition rounded-md rounded-r-none flex justify-between items-center gap-3 border-3 border-r-0 cursor-pointer",
+            "peer w-full p-3 pl-2 bg-orange-200 hover:bg-orange-300 transition rounded-md rounded-r-none flex justify-between items-center gap-3 border-3 border-r-0 cursor-pointer",
             !isCollapsableOpen && cardStyle.disablePatientCard ? "opacity-70" : "opacity-100",
             cardStyle.patientCardStyle
         ]}
         bind:offsetHeight={patientCardTriggerHeight}
         onclick={() => isCollapsableOpen = !isCollapsableOpen}
     >
-        <div class="w-full flex justify-start items-center">
+        <div class="w-full flex justify-start items-center gap-1">
             <div class="flex justify-center items-center h-full">
-                <MobileDevice size={32} weight="fill" color="#441306" style="rotate: 180deg;" />
+                {@render cardStyle.cardIcon()}
             </div>
             <div class="w-full flex flex-col items-baseline">
                 <div class="w-full flex flex-col justify-center items-baseline">
@@ -356,11 +501,11 @@
         }}
     >
 
-
-        <div class={[ "w-20 p-2 rounded-md flex flex-col justify-center items-center text-orange-50 text-sm font-bold", cardStyle.alertCardStyle ]}>
-            <p class="text-center">{texts.alertCardText}</p>
-        </div>
-
+        {#if texts.alertCardText}
+            <div class={[ "w-20 p-2 rounded-md flex flex-col justify-center items-center text-orange-50 text-sm font-bold", cardStyle.alertCardStyle ]}>
+                <p class="text-center">{texts.alertCardText}</p>
+            </div>
+        {/if}
     </button>
 </div>
 

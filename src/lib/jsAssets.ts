@@ -26,37 +26,49 @@ export function formatTime(timeString: string) {
   })
 }
 
-
+export function stripTime(date: Date) {
+  return new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate()
+  );
+}
 export function getOrderedDataList<T>(
     dataObj: T[], 
     dataFieldName: keyof T, 
-    date: [string, string] | null, 
+    filterDate: [string, string] | null, 
     dataChecker: (dataObj: T) => boolean = () => true,
     reverseOrder: boolean = false
 ): T[] {
     const resultData = dataObj.filter((item) => {
         if(!dataChecker(item)) return
-        const itemDate = new Date(item[dataFieldName] as string)
-        if(date instanceof Array) {
-            const endDate = new Date(date[0])
-            const startDate = new Date(date[1])
-            if(date[0] === date[1]) {
-                const itemMonth = new Date(item[dataFieldName] as string).getMonth() + 1
-                const itemYear = new Date(item[dataFieldName] as string).getFullYear()
-                const itemDay = new Date(item[dataFieldName] as string).getDate().toString().length === 1 ? 
-                            `0${new Date(item[dataFieldName] as string).getDate()}` : 
-                                new Date(item[dataFieldName] as string).getDate()
+
+        const itemDate = stripTime(new Date(item[dataFieldName] as string))
+        if(filterDate instanceof Array) {
+            const endDate = new Date(filterDate[0])
+            const startDate = new Date(filterDate[1])
+
+            if(filterDate[0] === filterDate[1]) {
+                // Filter by exact date
+                const selectedDate = new Date(item[dataFieldName] as string)
+                const itemMonth = selectedDate.getMonth() + 1
+                const itemYear = selectedDate.getFullYear()
+                const itemDayNumber = selectedDate.getDate()
+                const itemDay = itemDayNumber.toString().length === 1 ? `0${itemDayNumber}` : itemDayNumber
 
                 const itemFullDate = `${itemYear}-${itemMonth}-${itemDay}`
-                if(date[0] === itemFullDate) return item
-            }
-            if(itemDate > startDate && itemDate < endDate) return item
-                else return
+                if(filterDate[0] === itemFullDate) return item
+            } else if(itemDate.getTime() >= startDate.getTime() && itemDate.getTime() <= endDate.getTime()) {
+                
+                return item
+
+            } else return
         } else {
             return item
         }
     })
 
+    // Sort by date 
     resultData.sort((a, b) => {
         if(reverseOrder) {
             return new Date(a[dataFieldName] as string).getTime() - 

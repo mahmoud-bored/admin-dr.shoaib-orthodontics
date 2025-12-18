@@ -29,7 +29,7 @@
         formAction?: string;
     }
     let { 
-        isFormOpen, 
+        isFormOpen = $bindable(), 
         formData, 
         children 
     }: { 

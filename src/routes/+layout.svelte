@@ -92,7 +92,7 @@
 
 <div class="relative" style="height: calc(100vh - { navbarHeight }px);">
 	{#if navigating.to}
-		<div class="absolute top-0 left-0 w-full h-full bg-amber-950/20 z-110 flex justify-center items-center" transition:fade={{ duration: 100 }}>
+		<div class="fixed top-0 left-0 w-full h-full bg-amber-950/20 z-110 flex justify-center items-center" transition:fade={{duration: 100}}>
 			<Spinner size={64} weight="bold" color="#441405" class="animate-spin "/>
 		</div>
 	{/if}
