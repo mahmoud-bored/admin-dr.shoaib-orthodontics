@@ -20,7 +20,7 @@
         if(dataObj.attended === null) {
             if (dataObj.is_cancelled) return "border-red-600"
         } else if(dataObj.attended === false) {
-            if(dataObj.next_appointment_created !== true) return "border-red-600"
+            if(!dataObj.next_appointment) return "border-red-600"
         }
         return "border-green-600"
     }
@@ -30,7 +30,7 @@
         if(dataObj.attended === null) {
             if(dataObj.is_cancelled) return "bg-red-600 drop-shadow-md drop-shadow-red-600/70"
         } else if(dataObj.attended === false) {
-            if(dataObj.next_appointment_created !== true) return "bg-red-600 drop-shadow-md drop-shadow-red-600/70"
+            if(!dataObj.next_appointment) return "bg-red-600 drop-shadow-md drop-shadow-red-600/70"
         }
         return "bg-green-600 w-26"
     }
@@ -50,19 +50,19 @@
             else return false
     }
     function getDisabledButtonPlaceholderText(dataObj: DbRow): string {
-        if(dataObj.next_appointment_created) return "تم إنشاء موعد جديد"
+        if(dataObj.next_appointment) return "تم إنشاء موعد جديد"
             else return ""
     }
     function displayNewAppointmentButton(dataObj: DbRow): boolean {
         if(
-            (dataObj.attended === null && dataObj.is_cancelled && !dataObj.next_appointment_created) ||
-            (dataObj.attended === false && !dataObj.next_appointment_created) || 
-            (dataObj.attended === true && !dataObj.next_appointment_created)
+            (dataObj.attended === null && dataObj.is_cancelled && !dataObj.next_appointment) ||
+            (dataObj.attended === false && !dataObj.next_appointment) || 
+            (dataObj.attended === true && !dataObj.next_appointment)
         ) return true
         else return false
     }
     function showDisabledCardButtonPlaceHolder(dataObj: DbRow): boolean {
-        if(dataObj.next_appointment_created) return true
+        if(dataObj.next_appointment) return true
             else return false
     } 
     function showAppointmentAttendanceControls(dataObj: DbRow): boolean {
@@ -70,7 +70,7 @@
             else return false
     }
     function isPatientCardDisabled(dataObj: DbRow): boolean {
-        if(dataObj.next_appointment_created) return true
+        if(dataObj.next_appointment) return true
             else return false
     }
 

@@ -41,8 +41,8 @@ export const actions = {
         const new_appointment_time = formData.get('new_appointment_time')?.toString()
         const full_name = formData.get('full_name')?.toString()
         const phone_number = formData.get('phone_number')?.toString()
-        const long_term = formData.get('long_term')?.toString() === "true" ? true : false
 
+        console.log(patient_id, full_name, phone_number, new_appointment_date, new_appointment_time, appointment_id)
         if(
             !patient_id || 
             !full_name || 
@@ -59,7 +59,7 @@ export const actions = {
             current_appointment_id: appointment_id,
             new_full_name: full_name,
             new_phone_number: phone_number,
-            new_long_term: long_term,
+            new_long_term: true,
             new_appointment_date: new_appointment_full_date
         })
 

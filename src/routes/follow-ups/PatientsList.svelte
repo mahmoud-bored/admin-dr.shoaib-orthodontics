@@ -66,7 +66,9 @@
 
     </button>
 </div>
-<hr class="w-8/10 border border-orange-900/30 self-center my-2"/>
+<div class="w-full flex justify-center">
+    <hr class="w-8/10 border border-orange-900/30 self-center my-2"/>
+</div>
 
 
 {#snippet cardIcon()}

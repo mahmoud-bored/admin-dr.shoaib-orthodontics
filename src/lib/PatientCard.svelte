@@ -293,6 +293,10 @@
                 class:opacity-60={formControls.editPatientForm.rawDatePicker.disabled}
             >
                 <label for="new_appointment_date" class="w-full text-right mt-2 text-orange-900 font-bold">تاريخ الحجز</label>
+                {#if formControls.editPatientForm.rawDatePicker.disabled}
+                    <input type="date" name="new_appointment_date" value="{ new Date(formControls.editPatientForm.rawDatePicker.defaultValue).toISOString().split('T')[0] }" hidden />
+                    <input type="time" name="new_appointment_time" value="{ new Date(formControls.editPatientForm.rawDatePicker.defaultValue).toTimeString().slice(0, 5) }" hidden />
+                {/if}
                 <input 
                     class="bg-orange-100 w-9/10 p-2 rounded-md"
                     type="date" 
