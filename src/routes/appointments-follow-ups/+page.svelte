@@ -1,7 +1,7 @@
 <script lang="ts">
     import X from 'phosphor-svelte/lib/X';
     import Spinner from 'phosphor-svelte/lib/Spinner';
-	import { formatDate, formatTime, getOrderedDataList } from '$lib/jsAssets.js';
+	import { formatDate, formatTime, getOrderedDataList, stripTime } from '$lib/jsAssets.js';
     import MobileDevice from 'phosphor-svelte/lib/DeviceMobileSpeaker'
 	import PatientCard from '$lib/PatientCard.svelte';
 	import type { Database } from '$lib/database.types.js';
@@ -94,11 +94,11 @@
     let filterDate2 = $state("")
     let loading = $state(false)
     function checkFutureData(dataObj: DbRow): boolean {
-        if(todayDateObj < new Date(dataObj.appointment_date!)) return true
+        if(stripTime(todayDateObj).getTime()  <= stripTime(new Date(dataObj.appointment_date!)).getTime()) return true
             else return false
     }
     function checkPastData(dataObj: DbRow): boolean {
-        if(todayDateObj > new Date(dataObj.appointment_date!)) return true
+        if(stripTime(todayDateObj).getTime() > stripTime(new Date(dataObj.appointment_date!)).getTime()) return true
             else return false
     }
     const getFutureData = (date1: string, date2: string) => getOrderedDataList(appointments, 'appointment_date', [date1, date2], checkFutureData, true)
