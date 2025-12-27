@@ -83,7 +83,7 @@ export function getOrderedDataList<T>(
 
 
 export function getDayName(dateStr: string, locale: string) {
-    var date = new Date(dateStr);
+    let date = new Date(dateStr);
     return date.toLocaleDateString(locale, { weekday: 'long' });        
 }
 
@@ -102,4 +102,10 @@ export function getFullDateISOString(dateString: string, timeString: string): st
             console.error('dateString or timeString is empty', dateString, timeString)
             return ''
         } 
+}
+export function formatTimeForHTMLInputValue(dateString: Date) {
+    return dateString.toTimeString().slice(0, 5)
+}
+export function formatDateForHTMLInputValue(dateString: Date) {
+    return dateString.toISOString().split('T')[0]
 }

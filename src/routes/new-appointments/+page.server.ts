@@ -11,6 +11,9 @@ export async function load() {
     const { error: dbErr, data } = await supabase
         .from('patient_form_submissions')
         .select('*')
+        .eq('is_archived', false)
+        .eq('is_deleted', false)
+        .eq('long_term', false);
     if(dbErr) error(404);
     return {
         formSubmissions: data,
