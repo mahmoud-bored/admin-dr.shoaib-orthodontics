@@ -10,6 +10,7 @@
 	import Form from "./Form.svelte";
 	import type { Database } from "$lib/database.types";
 	import type { Snippet } from "svelte";
+	import { formatDateForHTMLInputValue, formatTimeForHTMLInputValue } from "./jsAssets";
 
     type DbRow1 = Database['public']['Views']['patient_form_submissions']['Row'];
     type DbRow2 = Database['public']['Views']['patient_appointment']['Row'];
@@ -32,6 +33,7 @@
         texts: {
             alertCardText: string | null;
             disabledButtonPlaceholderText: string;
+            bottomBannerTexts?: [string, string]
         },
         visibleControls: {
             mergePatientCardTriggerActions?: boolean;
@@ -106,12 +108,15 @@
     let appointmentAttendedConfirmation = $state({ value: false })
 
     function calculateCollapsableHeight() {
+        let bottomBannerHeight = 0
+        if(texts.bottomBannerTexts) bottomBannerHeight = 20
         const baseLevelHeight = 54
         let currentLevel = 2
         if(visibleControls.appointmentAttendanceControls) currentLevel += 2
         if(visibleControls.newAppointmentButton) currentLevel += 1
         if(visibleControls.disabledCardButtonPlaceHolder?.show) currentLevel += 1
-        return currentLevel * baseLevelHeight
+
+        return (currentLevel * baseLevelHeight) + bottomBannerHeight
     }
 
     let patientCardTriggerHeight = $state(0)
@@ -294,8 +299,8 @@
             >
                 <label for="new_appointment_date" class="w-full text-right mt-2 text-orange-900 font-bold">تاريخ الحجز</label>
                 {#if formControls.editPatientForm.rawDatePicker.disabled}
-                    <input type="date" name="new_appointment_date" value="{ new Date(formControls.editPatientForm.rawDatePicker.defaultValue).toISOString().split('T')[0] }" hidden />
-                    <input type="time" name="new_appointment_time" value="{ new Date(formControls.editPatientForm.rawDatePicker.defaultValue).toTimeString().slice(0, 5) }" hidden />
+                    <input type="date" name="new_appointment_date" value="{ formatDateForHTMLInputValue(new Date(formControls.editPatientForm.rawDatePicker.defaultValue)) }" hidden />
+                    <input type="time" name="new_appointment_time" value="{ formatTimeForHTMLInputValue(new Date(formControls.editPatientForm.rawDatePicker.defaultValue)) }" hidden />
                 {/if}
                 <input 
                     class="bg-orange-100 w-9/10 p-2 rounded-md"
@@ -514,7 +519,7 @@
 
 <div 
     class="relative z-0 -top-4 h-0 overflow-hidden transition-all w-full bg-orange-300 rounded-md flex flex-col justify-center items-center"
-    style="height: {isCollapsableOpen ? calculateCollapsableHeight(): "0"}px;"
+    style="height: {isCollapsableOpen ? calculateCollapsableHeight() : "0"}px;"
 >
     <div class="p-3 w-full flex justify-around md:justify-start items-center gap-3 md:gap-6 md:pl-9">
         <a 
@@ -595,6 +600,12 @@
                 <p class="font-bold text-lg text-green-900" dir="rtl">{texts.disabledButtonPlaceholderText}</p>
 
             </button>
+        </div>
+    {/if}
+    {#if texts.bottomBannerTexts}
+        <div class="absolute px-3 py-px bottom-0 w-full flex justify-between items-center gap-3 bg-orange-800 text-orange-100 text-sm">
+            <p>{ texts.bottomBannerTexts[0] }</p>
+            <p>{ texts.bottomBannerTexts[1] }</p>
         </div>
     {/if}
 </div>

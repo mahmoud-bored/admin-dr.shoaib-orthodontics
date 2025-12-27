@@ -278,6 +278,7 @@
 		-webkit-text-size-adjust: 100%;
 		font-variation-settings: normal;
 		scrollbar-color: var(--bg-muted);
+		scroll-behavior: smooth
 	}
  
 	body {

@@ -1,7 +1,7 @@
 <script lang="ts">
     import X from 'phosphor-svelte/lib/X';
     import Spinner from 'phosphor-svelte/lib/Spinner';
-	import { formatDate, formatTime, getOrderedDataList, stripTime } from '$lib/jsAssets.js';
+	import { formatDate, formatTime, getDayName, getOrderedDataList, stripTime } from '$lib/jsAssets.js';
     import MobileDevice from 'phosphor-svelte/lib/DeviceMobileSpeaker'
 	import PatientCard from '$lib/PatientCard.svelte';
 	import type { Database } from '$lib/database.types.js';
@@ -22,7 +22,7 @@
         if(dataObj.attended === null) {
             if (dataObj.is_cancelled) return "border-red-600"
         } else if(dataObj.attended === false) {
-            if(dataObj.next_appointment === null) return "border-red-600"
+            return "border-red-600"
         }
         return "border-green-600"
     }
@@ -30,9 +30,9 @@
 
     function getAlertCardStyle(dataObj: DbRow): string {
         if(dataObj.attended === null) {
-            if(dataObj.is_cancelled) return "bg-red-600 drop-shadow-md drop-shadow-red-600/70"
+            if(dataObj.is_cancelled) return "bg-red-600 drop-shadow-md drop-shadow-red-600/70 w-26"
         } else if(dataObj.attended === false) {
-            if(dataObj.next_appointment === null) return "bg-red-600 drop-shadow-md drop-shadow-red-600/70"
+            return "bg-red-600 drop-shadow-md drop-shadow-red-600/70 w-26"
         }
         return "bg-green-600 w-26"
     }
@@ -84,11 +84,9 @@
     }
 
 
-    const todayDateObj = $state(new Date())
-    const todayDateString = $state(formatDate(todayDateObj.toLocaleDateString()))
-    const tomorrowDateObj = new Date(formatDate(todayDateString))
+    const todayDateObj = new Date()
+    const tomorrowDateObj = new Date()
     tomorrowDateObj.setDate(todayDateObj.getDate() + 1)
-    const tomorrowDateString = $state(formatDate(tomorrowDateObj.toLocaleDateString()))
 
     let filterDate1 = $state("")
     let filterDate2 = $state("")
@@ -124,12 +122,6 @@
             orderedPastAppointmentsList = getOrderedDataList(appointments, 'appointment_date', null, checkPastData)
         }
     })
-
-    
-    function getDayName(dateStr: string) {
-        var date = new Date(dateStr);
-        return date.toLocaleDateString('ar-eg', { weekday: 'long' });        
-    }
 
     let isNewPatientAppointmentFormOpen = $state({ value: false })
 
@@ -236,10 +228,11 @@
                     {#if i === 0 || formatDate(appointment.appointment_date!) !== formatDate(orderedFutureAppointmentsList[i - 1].appointment_date!)}
                         <p class="text-xl py-2 font-bold text-right text-orange-900">
                             {
-                                formatDate(appointment.appointment_date!) === todayDateString ? "اليوم" :
-                                formatDate(appointment.appointment_date!) === tomorrowDateString ? "غدا" :
-                                getDayName(appointment.appointment_date!) + " - " + formatDate(appointment.appointment_date!)
+                                formatDate(appointment.appointment_date!) === formatDate(todayDateObj.toDateString()) ? "اليوم" :
+                                formatDate(appointment.appointment_date!) === formatDate(tomorrowDateObj.toDateString()) ? "غدا" :
+                                getDayName(appointment.appointment_date!, 'ar-eg')
                             }
+                            { " - " + formatDate(appointment.appointment_date!) }
                         </p>
                     {/if}
                     <PatientCard 
@@ -335,7 +328,7 @@
                 {#each orderedPastAppointmentsList as appointment, i}
                     {#if i === 0 || formatDate(appointment.appointment_date!) !== formatDate(orderedPastAppointmentsList[i - 1].appointment_date!)}
                         <p class="text-xl py-2 font-bold text-right text-orange-900">
-                            { getDayName(appointment.appointment_date!) + " - " + formatDate(appointment.appointment_date!) }
+                            { getDayName(appointment.appointment_date!, 'ar-eg') + " - " + formatDate(appointment.appointment_date!) }
                         </p>
                     {/if}
                     <PatientCard 

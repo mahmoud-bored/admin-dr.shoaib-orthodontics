@@ -1,7 +1,7 @@
 <script lang="ts">
     import X from 'phosphor-svelte/lib/X';
     import Spinner from 'phosphor-svelte/lib/Spinner';
-	import { formatDate, formatTime, getOrderedDataList } from '$lib/jsAssets.js';
+	import { formatDate, formatTime, getDayName, getOrderedDataList } from '$lib/jsAssets.js';
     import MobileDevice from 'phosphor-svelte/lib/DeviceMobileSpeaker'
 	import PatientCard from '$lib/PatientCard.svelte';
 	import type { Database } from '$lib/database.types.js';
@@ -95,11 +95,9 @@
             orderedFormSubmissionsList = getOrderedDataList(formSubmissions, 'created_at', null)
         }
     })
-    const todayDateObj = $state(new Date())
-    const todayDateString = $state(formatDate(todayDateObj.toLocaleDateString()))
-    const yesterdayDateObj = new Date(formatDate(todayDateString))
+    const todayDateObj = new Date()
+    const yesterdayDateObj = new Date()
     yesterdayDateObj.setDate(todayDateObj.getDate() - 1)
-    const yesterdayDateString = $state(formatDate(yesterdayDateObj.toLocaleDateString()))
     
     
 </script>
@@ -141,12 +139,13 @@
             {#if orderedFormSubmissionsList.length > 0}
                 {#each orderedFormSubmissionsList as formSubmission, i}
                     {#if i === 0 || formatDate(formSubmission.created_at!) !== formatDate(orderedFormSubmissionsList[i - 1].created_at!)}
-                        <p class="text-xl py-2 font-bold text-right">
+                        <p class="text-xl py-2 font-bold text-right" dir="rtl">
                             {
-                                formatDate(formSubmission.created_at!) === todayDateString ? "اليوم" :
-                                formatDate(formSubmission.created_at!) === yesterdayDateString ? "الأمس" :
-                                formatDate(formSubmission.created_at!)
+                                formatDate(formSubmission.created_at!) === formatDate(todayDateObj.toDateString()) ? "اليوم" :
+                                formatDate(formSubmission.created_at!) === formatDate(yesterdayDateObj.toDateString()) ? "الأمس" :
+                                getDayName(formSubmission.created_at!, 'ar-eg')
                             }
+                            { " - " + formatDate(formSubmission.created_at!) }
                         </p>
                     {/if}
                     <PatientCard 
@@ -160,6 +159,10 @@
                         texts={{
                             alertCardText: getAlertText(formSubmission),
                             disabledButtonPlaceholderText: "تم النقل إلى \"متابعة الحجوزات\"",
+                            bottomBannerTexts: [
+                                formatTime(formSubmission.created_at!),
+                                `${formSubmission.utm_source} - ${formSubmission.utm_campaign} - ${formSubmission.utm_medium}`
+                            ]
                         }}
                         visibleControls={{
                             disabledCardButtonPlaceHolder: {
