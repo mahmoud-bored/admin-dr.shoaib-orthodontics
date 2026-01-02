@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Database } from "$lib/database.types";
 	import Form from "$lib/Form.svelte";
-	import { formatDate, formatDateForHTMLInputValue, formatTime, formatTimeForHTMLInputValue } from "$lib/jsAssets";
+	import { formatDateForHTMLInputValue, formatTime, formatTimeForHTMLInputValue, getFullDateISOString } from "$lib/jsAssets";
 	import Scroll from "phosphor-svelte/lib/Scroll";
     import Plus from "phosphor-svelte/lib/Plus";
 
@@ -15,10 +15,36 @@
 
 
 
-    let editAppointmentForm = $state({ value: false })
+    let editAppointmentForm = $state({ 
+        value: false,
+        data: {
+            appointment_date: formatDateForHTMLInputValue(new Date(appointmentData.appointment_date!)),
+            appointment_time: formatTimeForHTMLInputValue(new Date(appointmentData.appointment_date!)),
+            dateIsoString: ""
+        } 
+    })
+    $effect(() => {
+        if(editAppointmentForm.data.appointment_date || editAppointmentForm.data.appointment_time) {
+            editAppointmentForm.data.dateIsoString = getFullDateISOString(editAppointmentForm.data.appointment_date!, editAppointmentForm.data.appointment_time!)
+        }
+    })
     let appointmentAttendedConfirmation = $state({ value: false })
     let isCancelAppointmentConfirmationOpen = $state({ value: false })
-    let newAppointmentForm = $state({ value: false })
+    let newAppointmentForm = $state({ 
+        value: false,
+        data: {
+            appointment_date: "",
+            appointment_time: "",
+            dateIsoString: ""
+        }
+    })
+    $effect(() => {
+        if(newAppointmentForm.data.appointment_date || newAppointmentForm.data.appointment_time) {
+            newAppointmentForm.data.dateIsoString = getFullDateISOString(newAppointmentForm.data.appointment_date!, newAppointmentForm.data.appointment_time!)
+        }
+    })
+    $inspect(newAppointmentForm.data)
+    $inspect(editAppointmentForm.data)
 
     function getAlertText(dataObj: DbRow): string {
         let alertText = ``
@@ -105,6 +131,7 @@
                 class="bg-orange-100 w-9/10 p-2 rounded-md" 
                 type="date" 
                 name="new_appointment_date"
+                bind:value={ newAppointmentForm.data.appointment_date }
                 required
             />
             <label for="new_appointment_time" class="w-full text-right text-orange-900/90 font-bold">موعد الحجز</label>
@@ -112,8 +139,10 @@
                 class="bg-orange-100 w-9/10 p-2 rounded-md" 
                 type="time" 
                 name="new_appointment_time"
+                bind:value={ newAppointmentForm.data.appointment_time }
                 required
             />
+            <input type="hidden" name="date_iso_string" value={ newAppointmentForm.data.dateIsoString } />
         </div>
     </Form>
 
@@ -158,7 +187,7 @@
                 class="bg-orange-100 w-9/10 p-2 rounded-md cursor-pointer disabled:cursor-not-allowed" 
                 type="date" 
                 name="new_appointment_date"
-                value={ formatDateForHTMLInputValue(new Date(appointmentData.appointment_date!)) }
+                bind:value={ editAppointmentForm.data.dateIsoString }
                 disabled={ disableAppointmentDateEditing(appointmentData) }
                 required={ !disableAppointmentDateEditing(appointmentData) }
             />
@@ -167,10 +196,11 @@
                 class="bg-orange-100 w-9/10 p-2 rounded-md cursor-pointer disabled:cursor-not-allowed" 
                 type="time" 
                 name="new_appointment_time" 
-                value={ formatTimeForHTMLInputValue(new Date(appointmentData.appointment_date!))}
+                bind:value={ editAppointmentForm.data.appointment_time }
                 disabled={ disableAppointmentDateEditing(appointmentData) }
                 required={ !disableAppointmentDateEditing(appointmentData) }
             />
+            <input type="hidden" name="date_iso_string" value={ editAppointmentForm.data.dateIsoString } disabled={ disableAppointmentDateEditing(appointmentData) }/>
         </div>
         {#if showAppointmentAttendanceControls(appointmentData)}
             <div class="w-full flex flex-col p-3 justify-center items-center">

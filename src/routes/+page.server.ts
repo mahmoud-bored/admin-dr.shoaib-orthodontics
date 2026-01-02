@@ -1,4 +1,3 @@
-import { getFullDateISOString } from "$lib/jsAssets";
 import { supabase } from "$lib/supabaseClient";
 import { redirect, type Actions } from "@sveltejs/kit";
 
@@ -59,16 +58,12 @@ export const actions = {
     newPatientAppointment: async ({ request }) => {
         const formData = await request.formData()
         const patient_id = formData.get('patient_id')?.toString()
-        const appointmentDate = formData.get('new_appointment_date')?.toString()
-        const appointmentTime = formData.get('new_appointment_time')?.toString()
-        if(!patient_id || !appointmentDate || !appointmentTime) redirect(303, '/dbError');
+        const appointment_date = formData.get('date_iso_string')?.toString()
+        if(!patient_id || !appointment_date) redirect(303, '/dbError');
 
         const { error: dbErr } = await supabase
             .from('appointment')
-            .insert({
-                patient_id: parseInt(patient_id),
-                appointment_date: getFullDateISOString(appointmentDate, appointmentTime),
-            })
+            .insert({ patient_id: parseInt(patient_id), appointment_date })
 
         if(dbErr) {
             console.log(dbErr)
@@ -79,14 +74,13 @@ export const actions = {
         const formData = await request.formData()
         const patient_id = formData.get('patient_id')?.toString()
         const appointment_id = formData.get('appointment_id')?.toString()
-        const appointmentDate = formData.get('new_appointment_date')?.toString()
-        const appointmentTime = formData.get('new_appointment_time')?.toString()
-        if(!patient_id || !appointmentDate || !appointmentTime || !appointment_id) redirect(303, '/dbError');
+        const new_appointment_date = formData.get('date_iso_string')?.toString()
+        if(!patient_id || !new_appointment_date || !appointment_id) redirect(303, '/dbError');
 
         const { error: dbErr } = await supabase.rpc('new_related_appointment', {
             current_patient_id: parseInt(patient_id),
             current_appointment_id: parseInt(appointment_id),
-            new_appointment_date: getFullDateISOString(appointmentDate, appointmentTime),
+            new_appointment_date: new_appointment_date,
         })
 
         if(dbErr) {
@@ -98,15 +92,13 @@ export const actions = {
         const formData = await request.formData()
         const new_full_name = formData.get('full_name')?.toString()
         const new_phone_number = formData.get('phone_number')?.toString()
-        const new_appointment_date = formData.get('new_appointment_date')?.toString()
-        const new_appointment_time = formData.get('new_appointment_time')?.toString()
-        if(!new_full_name || !new_phone_number || !new_appointment_date || !new_appointment_time) redirect(303, '/dbError');
-        const new_appointment_full_date = getFullDateISOString(new_appointment_date, new_appointment_time)
+        const new_appointment_date = formData.get('date_iso_string')?.toString()
+        if(!new_full_name || !new_phone_number || !new_appointment_date) redirect(303, '/dbError');
 
         const { error: dbErr } = await supabase.rpc('new_patient_and_appointment', {
             new_full_name,
             new_phone_number,
-            new_appointment_date: new_appointment_full_date
+            new_appointment_date
         })
         if(dbErr) {
             console.log(dbErr)
@@ -116,16 +108,12 @@ export const actions = {
     editAppointment: async ({ request }) => {
         const formData = await request.formData()
         const appointment_id = formData.get('appointment_id')?.toString()
-        const new_appointment_date = formData.get('new_appointment_date')?.toString()
-        const new_appointment_time = formData.get('new_appointment_time')?.toString()
-        if(!appointment_id || !new_appointment_date || !new_appointment_time) redirect(303, '/dbError');
-        const new_appointment_full_date = getFullDateISOString(new_appointment_date, new_appointment_time)
+        const appointment_date = formData.get('date_iso_string')?.toString()
+        if(!appointment_id || !appointment_date) redirect(303, '/dbError');
 
         const { error: dbErr } = await supabase
             .from('appointment')
-            .update({
-                appointment_date: new_appointment_full_date
-            })
+            .update({ appointment_date })
             .eq('appointment_id', parseInt(appointment_id))
 
         if(dbErr) {

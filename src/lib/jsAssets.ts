@@ -23,6 +23,7 @@ export function formatTime(timeString: string) {
   return date.toLocaleString([], {
     hour: "2-digit",
     minute: "2-digit",
+    hour12: true
   })
 }
 

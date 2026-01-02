@@ -3,7 +3,7 @@
 	import { page } from "$app/state";
 	import type { Database } from "$lib/database.types";
 	import Form from "$lib/Form.svelte";
-	import { formatDate, formatDateForHTMLInputValue, formatTime, formatTimeForHTMLInputValue, getDayName, getOrderedDataList, stripTime } from "$lib/jsAssets";
+	import { formatDate, formatDateForHTMLInputValue, formatTime, formatTimeForHTMLInputValue, getDayName, getFullDateISOString, getOrderedDataList, stripTime } from "$lib/jsAssets";
 	import TelInputElmnt from "$lib/TelInputElmnt.svelte";
 	import CaretUp from "phosphor-svelte/lib/CaretUp";
 	import Plus from "phosphor-svelte/lib/Plus";
@@ -24,17 +24,24 @@
     type DbRow2 = Database['public']['Views']['patient_appointment']['Row'];
     type DbRow3 = Database['public']['Tables']['patient']['Row'];
     const patientAppointments = getOrderedDataList(data.patientAppointments, 'appointment_date', null, checkFutureData, true)
-    let newAppointmentDefaultValues: { 
-        appointment_date: string | null, 
-        appointment_time: string | null 
-    } = $state({
-        appointment_date: null,
-        appointment_time: null
+    let newAppointmentDefaultValues = $state({
+        appointment_date: "",
+        appointment_time: "",
+        dateIsoString: ""
     })
+    $effect(() => {
+        if(newAppointmentDefaultValues.appointment_date || newAppointmentDefaultValues.appointment_time) {
+            newAppointmentDefaultValues.dateIsoString = getFullDateISOString(newAppointmentDefaultValues.appointment_date!, newAppointmentDefaultValues.appointment_time!)
+        }
+    })
+    $inspect(newAppointmentDefaultValues)
+
     const resetNewAppointmentDefaultValues = () => {
         newAppointmentDefaultValues = {
-            appointment_date: null,
-            appointment_time: null
+            appointment_date: "",
+            appointment_time: "",
+            dateIsoString: ""
+
         }
     }
     let isNewAppointmentFormOpen = $state({ value: false })
@@ -227,7 +234,6 @@
         return datesArr
     }
     const workDatesList = getWorkDatesList()
-    $inspect(workDatesList)
     let scrollY = $state(0)
 
     const scrollToPresent = () => {
@@ -421,7 +427,7 @@
                 class="bg-orange-100 w-9/10 p-2 rounded-md" 
                 type="date" 
                 name="new_appointment_date"
-                value={ newAppointmentDefaultValues.appointment_date}
+                bind:value={ newAppointmentDefaultValues.appointment_date }
                 required
             />
             <label for="new_appointment_time" class="w-full text-right text-orange-900/90 font-bold">موعد الحجز</label>
@@ -429,9 +435,10 @@
                 class="bg-orange-100 w-9/10 p-2 rounded-md" 
                 type="time" 
                 name="new_appointment_time" 
-                value={ newAppointmentDefaultValues.appointment_time}
+                bind:value={ newAppointmentDefaultValues.appointment_time }
                 required
             />
+            <input type="hidden" name="date_iso_string" value={ newAppointmentDefaultValues.dateIsoString } />
         </div>
     </Form>
 
@@ -473,7 +480,7 @@
                 class="bg-orange-100 w-9/10 p-2 rounded-md" 
                 type="date" 
                 name="new_appointment_date"
-                value={ newAppointmentDefaultValues.appointment_date}
+                bind:value={ newAppointmentDefaultValues.appointment_date }
                 required
             />
             <label for="new_appointment_time" class="w-full text-right text-orange-900/90 font-bold">موعد الحجز</label>
@@ -481,9 +488,10 @@
                 class="bg-orange-100 w-9/10 p-2 rounded-md" 
                 type="time" 
                 name="new_appointment_time" 
-                value={ newAppointmentDefaultValues.appointment_time}
+                bind:value={ newAppointmentDefaultValues.appointment_time }
                 required
             />
+            <input type="hidden" name="date_iso_string" value={ newAppointmentDefaultValues.dateIsoString } />
         </div>
     </Form>
 
