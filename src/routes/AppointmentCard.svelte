@@ -20,7 +20,10 @@
         data: {
             appointment_date: formatDateForHTMLInputValue(new Date(appointmentData.appointment_date!)),
             appointment_time: formatTimeForHTMLInputValue(new Date(appointmentData.appointment_date!)),
-            dateIsoString: ""
+            dateIsoString: getFullDateISOString(
+                formatDateForHTMLInputValue(new Date(appointmentData.appointment_date!)), 
+                formatTimeForHTMLInputValue(new Date(appointmentData.appointment_date!))
+            )
         } 
     })
     $effect(() => {
@@ -43,8 +46,6 @@
             newAppointmentForm.data.dateIsoString = getFullDateISOString(newAppointmentForm.data.appointment_date!, newAppointmentForm.data.appointment_time!)
         }
     })
-    $inspect(newAppointmentForm.data)
-    $inspect(editAppointmentForm.data)
 
     function getAlertText(dataObj: DbRow): string {
         let alertText = ``
@@ -142,7 +143,7 @@
                 bind:value={ newAppointmentForm.data.appointment_time }
                 required
             />
-            <input type="hidden" name="date_iso_string" value={ newAppointmentForm.data.dateIsoString } />
+            <input type="hidden" name="date_iso_string" bind:value={ newAppointmentForm.data.dateIsoString } />
         </div>
     </Form>
 
@@ -187,7 +188,7 @@
                 class="bg-orange-100 w-9/10 p-2 rounded-md cursor-pointer disabled:cursor-not-allowed" 
                 type="date" 
                 name="new_appointment_date"
-                bind:value={ editAppointmentForm.data.dateIsoString }
+                bind:value={ editAppointmentForm.data.appointment_date }
                 disabled={ disableAppointmentDateEditing(appointmentData) }
                 required={ !disableAppointmentDateEditing(appointmentData) }
             />
@@ -200,7 +201,7 @@
                 disabled={ disableAppointmentDateEditing(appointmentData) }
                 required={ !disableAppointmentDateEditing(appointmentData) }
             />
-            <input type="hidden" name="date_iso_string" value={ editAppointmentForm.data.dateIsoString } disabled={ disableAppointmentDateEditing(appointmentData) }/>
+            <input type="hidden" name="date_iso_string" bind:value={ editAppointmentForm.data.dateIsoString } disabled={ disableAppointmentDateEditing(appointmentData) }/>
         </div>
         {#if showAppointmentAttendanceControls(appointmentData)}
             <div class="w-full flex flex-col p-3 justify-center items-center">

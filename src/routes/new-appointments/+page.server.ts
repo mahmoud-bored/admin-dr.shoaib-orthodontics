@@ -30,12 +30,8 @@ export const actions = {
         const new_full_name = formData.get('full_name')?.toString()
         const new_phone_number = formData.get('phone_number')?.toString()
         const new_status = formData.get('status')?.toString()
-        const new_appointment_date = formData.get('new_appointment_date')?.toString()
-        const new_appointment_time = formData.get('new_appointment_time')?.toString()
-
+        const new_appointment_date = formData.get('date_iso_string')?.toString() ?? null!
         
-        const new_appointment_full_date = getFullDateISOString(new_appointment_date!, new_appointment_time!) ?? null
-
         if(
             !current_patient_id || 
             !new_full_name || 
@@ -49,8 +45,8 @@ export const actions = {
                 current_patient_id,
                 new_full_name,
                 new_phone_number,
-                new_status: null as unknown as string,
-                new_appointment_date: new_appointment_full_date!
+                new_status: null!,
+                new_appointment_date
             })
             if(dbErr) {
                 console.log(dbErr)

@@ -1,7 +1,7 @@
 <script lang="ts">
     import X from 'phosphor-svelte/lib/X';
     import Spinner from 'phosphor-svelte/lib/Spinner';
-	import { formatDate, formatTime, getDayName, getOrderedDataList, stripTime } from '$lib/jsAssets.js';
+	import { formatDate, formatTime, getDayName, getFullDateISOString, getOrderedDataList, stripTime } from '$lib/jsAssets.js';
     import MobileDevice from 'phosphor-svelte/lib/DeviceMobileSpeaker'
 	import PatientCard from '$lib/PatientCard.svelte';
 	import type { Database } from '$lib/database.types.js';
@@ -123,8 +123,19 @@
         }
     })
 
-    let isNewPatientAppointmentFormOpen = $state({ value: false })
-
+    let isNewPatientAppointmentFormOpen = $state({ 
+        value: false,
+        data: {
+            appointment_time: "",
+            appointment_date: "",
+            dateIsoString: ""
+        }
+    })
+    $effect(() => {
+        if(isNewPatientAppointmentFormOpen.data.appointment_date || isNewPatientAppointmentFormOpen.data.appointment_time) {
+            isNewPatientAppointmentFormOpen.data.dateIsoString = getFullDateISOString(isNewPatientAppointmentFormOpen.data.appointment_date!, isNewPatientAppointmentFormOpen.data.appointment_time!)
+        }
+    })
 </script>
 {#if loading}
     <div class="fixed top-0 left-0 w-full h-full bg-amber-950/40 z-110 flex justify-center items-center" transition:fade={{duration: 100}}>
@@ -165,6 +176,7 @@
                     type="date" 
                     name="new_appointment_date" 
                     required
+                    bind:value={ isNewPatientAppointmentFormOpen.data.appointment_date }
                 />
                 <label for="new_appointment_time" class="w-full text-right text-orange-900/90 font-bold">موعد الحجز</label>
                 <input 
@@ -172,7 +184,9 @@
                     type="time" 
                     name="new_appointment_time" 
                     required
+                    bind:value={ isNewPatientAppointmentFormOpen.data.appointment_time }
                 />
+                <input type="hidden" name="date_iso_string" bind:value="{isNewPatientAppointmentFormOpen.data.dateIsoString}" />
             </div>
     </Form>
 {/if}

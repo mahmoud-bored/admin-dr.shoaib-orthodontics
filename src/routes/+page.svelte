@@ -34,7 +34,6 @@
             newAppointmentDefaultValues.dateIsoString = getFullDateISOString(newAppointmentDefaultValues.appointment_date!, newAppointmentDefaultValues.appointment_time!)
         }
     })
-    $inspect(newAppointmentDefaultValues)
 
     const resetNewAppointmentDefaultValues = () => {
         newAppointmentDefaultValues = {
@@ -438,7 +437,7 @@
                 bind:value={ newAppointmentDefaultValues.appointment_time }
                 required
             />
-            <input type="hidden" name="date_iso_string" value={ newAppointmentDefaultValues.dateIsoString } />
+            <input type="hidden" name="date_iso_string" bind:value={ newAppointmentDefaultValues.dateIsoString } />
         </div>
     </Form>
 
@@ -491,7 +490,7 @@
                 bind:value={ newAppointmentDefaultValues.appointment_time }
                 required
             />
-            <input type="hidden" name="date_iso_string" value={ newAppointmentDefaultValues.dateIsoString } />
+            <input type="hidden" name="date_iso_string" bind:value={ newAppointmentDefaultValues.dateIsoString } />
         </div>
     </Form>
 

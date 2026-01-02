@@ -14,13 +14,11 @@ export const actions = {
         const payment_amount = parseInt(formData.get('payment_amount')?.toString() ?? "0")
         const is_new_amount_positive = formData.get('is_amount_positive')?.toString() === "false" ? false : true
         const new_notes = formData.get('notes')?.toString() ?? null as unknown as string
-        const new_appointment_date = formData.get('new_appointment_date')?.toString()
-        const new_appointment_time = formData.get('new_appointment_time')?.toString()
+        const isNewAppointment = formData.get('new_appointment')?.toString()
+        const new_appointment_date = formData.get('date_iso_string')?.toString()!
 
-        const isNewAppointment = (new_appointment_date && new_appointment_time) ? true : false
         const isNewPayment = (new_payment && payment_amount !== 0) ? true : false
 
-        const new_appointment_full_date = isNewAppointment ? getFullDateISOString(new_appointment_date!, new_appointment_time!) : null
         if(!current_patient_id || !current_appointment_id) 
             redirect(303, '/dbError')
 
@@ -29,7 +27,7 @@ export const actions = {
             const { error: dbErr } = await supabase.rpc('new_appointment_and_payment', {
                 current_patient_id,
                 current_appointment_id,
-                new_appointment_date: new_appointment_full_date!,
+                new_appointment_date,
                 new_payment_amount: payment_amount,
                 is_new_payment_amount_positive: is_new_amount_positive,
                 new_notes
@@ -56,7 +54,7 @@ export const actions = {
             const { error: dbErr } = await supabase.rpc('new_single_appointment', {
                 current_patient_id,
                 current_appointment_id,
-                new_appointment_date: new_appointment_full_date!,
+                new_appointment_date,
                 new_notes
             })
             if(dbErr) {

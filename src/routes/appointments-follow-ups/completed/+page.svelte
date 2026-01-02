@@ -1,5 +1,6 @@
 <script lang="ts">
     import { page } from '$app/state';
+	import { getFullDateISOString } from '$lib/jsAssets';
 	import Plus from 'phosphor-svelte/lib/Plus';
     const patient_id = page.url.searchParams.get('patient_id');
     const appointment_id = page.url.searchParams.get('appointment_id');
@@ -10,8 +11,19 @@
     let isAmountPositive = $state("true")
     let notes = $state("")
 
-    let isNewAppointmentFormOpen = $state(false)
-
+    let isNewAppointmentFormOpen = $state({
+        value: false,
+        data: {
+            appointment_time: "",
+            appointment_date: "",
+            dateIsoString: ""
+        }
+    })
+    $effect(() => {
+        if(isNewAppointmentFormOpen.data.appointment_date || isNewAppointmentFormOpen.data.appointment_time) {
+            isNewAppointmentFormOpen.data.dateIsoString = getFullDateISOString(isNewAppointmentFormOpen.data.appointment_date!, isNewAppointmentFormOpen.data.appointment_time!)
+        }
+    })
     const notesList = [
         { text: "ملاحظة 1" },
         { text: "ملاحظة 2" },
@@ -24,9 +36,10 @@
         <input type="text" name="patient_id" value="{patient_id}" hidden>
         <input type="text" name="appointment_id" value="{appointment_id}" hidden>
         <input type="text" name="new_payment" value="{isPaymentFormOpen ? "true" : "false"}" hidden>
-        <input type="text" name="new_appointment" value="{isNewAppointmentFormOpen ? "true" : "false"}" hidden>
+        <input type="text" name="new_appointment" value="{isNewAppointmentFormOpen.value ? "true" : "false"}" hidden>
         <input type="text" name="notes" bind:value={notes} hidden>
-        
+        <input type="text" name="date_iso_string" bind:value="{isNewAppointmentFormOpen.data.dateIsoString}" hidden>
+
         <div class="w-full md:max-w-[400px] bg-green-100 border-2 border-green-600 p-3 rounded-md">
             <p class="w-full text-center text-lg text-green-600 font-bold">تم تأكيد حضور الموعد بنجاح</p>   
         </div>
@@ -75,21 +88,21 @@
             type="button"
             class={[
                 "w-full py-2 rounded-md flex justify-center items-center gap-3 transition cursor-pointer drop-shadow",
-                isNewAppointmentFormOpen ? "bg-gray-700 hover:bg-gray-800" : "bg-orange-900 hover:bg-orange-800"
+                isNewAppointmentFormOpen.value ? "bg-gray-700 hover:bg-gray-800" : "bg-orange-900 hover:bg-orange-800"
             ]}
-            onclick={() => isNewAppointmentFormOpen = !isNewAppointmentFormOpen}    
+            onclick={() => isNewAppointmentFormOpen.value = !isNewAppointmentFormOpen.value}    
         >
             <Plus size={24} weight="bold" color="#ffedd4" class="mt-1"/>
             <p class="font-bold text-lg text-orange-100">إضافة موعد جديد</p>
         </button>
         <div 
             class="h-0 w-full overflow-hidden flex flex-col justify-center items-center transition-all"
-            class:h-40={isNewAppointmentFormOpen}>
+            class:h-40={isNewAppointmentFormOpen.value}>
             <div class="flex flex-col w-full px-2 gap-2">
                 <label for="new_appointment_date" class="w-full text-right text-orange-900 font-bold">تاريخ الحجز</label>
-                <input class="bg-orange-200 w-full p-2 rounded-md" type="date" name="new_appointment_date">
+                <input class="bg-orange-200 w-full p-2 rounded-md" type="date" name="new_appointment_date" bind:value={ isNewAppointmentFormOpen.data.appointment_date }>
                 <label for="new_appointment_time" class="w-full text-right text-orange-900 font-bold">موعد الحجز</label>
-                <input class="bg-orange-200 w-full p-2 rounded-md" type="time" name="new_appointment_time">
+                <input class="bg-orange-200 w-full p-2 rounded-md" type="time" name="new_appointment_time" bind:value={ isNewAppointmentFormOpen.data.appointment_time }>
             </div>
         </div>
 

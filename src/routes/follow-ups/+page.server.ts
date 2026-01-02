@@ -35,32 +35,28 @@ export async function load() {
 export const actions = {
     update: async ({ request }) => {
         const formData = await request.formData()
-        const patient_id = parseInt(formData.get('patient_id')?.toString() as string)
-        const appointment_id = parseInt(formData.get('appointment_id')?.toString() as string)
-        const new_appointment_date = formData.get('new_appointment_date')?.toString()
-        const new_appointment_time = formData.get('new_appointment_time')?.toString()
-        const full_name = formData.get('full_name')?.toString()
-        const phone_number = formData.get('phone_number')?.toString()
+        const current_patient_id = parseInt(formData.get('patient_id')?.toString() as string)
+        const current_appointment_id = parseInt(formData.get('appointment_id')?.toString() as string)
+        const new_appointment_date = formData.get('date_iso_string')?.toString()
+        const new_full_name = formData.get('full_name')?.toString()
+        const new_phone_number = formData.get('phone_number')?.toString()
 
-        console.log(patient_id, full_name, phone_number, new_appointment_date, new_appointment_time, appointment_id)
         if(
-            !patient_id || 
-            !full_name || 
-            !phone_number || 
+            !current_patient_id || 
+            !new_full_name || 
+            !new_phone_number || 
             !new_appointment_date || 
-            !new_appointment_time || 
-            !appointment_id
+            !current_appointment_id
         ) redirect(303, '/dbError');
         
-        const new_appointment_full_date = getFullDateISOString(new_appointment_date, new_appointment_time)
         
         const { error: dbErr } = await supabase.rpc('update_patient_appointment', {
-            current_patient_id: patient_id,
-            current_appointment_id: appointment_id,
-            new_full_name: full_name,
-            new_phone_number: phone_number,
+            current_patient_id,
+            current_appointment_id,
+            new_full_name,
+            new_phone_number,
             new_long_term: true,
-            new_appointment_date: new_appointment_full_date
+            new_appointment_date
         })
 
         if(dbErr) {
@@ -119,15 +115,14 @@ export const actions = {
     newAppointment: async ({ request }) => {
         const formData = await request.formData()
         const patient_id = formData.get('patient_id')?.toString()
-        const appointmentDate = formData.get('new_appointment_date')?.toString()
-        const appointmentTime = formData.get('new_appointment_time')?.toString()
         const appointment_id = formData.get('appointment_id')?.toString()
-        if(!patient_id || !appointmentDate || !appointmentTime || !appointment_id) redirect(303, '/dbError');
+        const new_appointment_date = formData.get('date_iso_string')?.toString()
+        if(!patient_id || !new_appointment_date || !appointment_id) redirect(303, '/dbError');
 
         const { error: dbErr } = await supabase.rpc('new_related_appointment', {
             current_patient_id: parseInt(patient_id),
             current_appointment_id: parseInt(appointment_id),
-            new_appointment_date: getFullDateISOString(appointmentDate, appointmentTime),
+            new_appointment_date,
         })
 
         if(dbErr) {
@@ -217,15 +212,14 @@ export const actions = {
     newPatientAppointment: async ({ request }) => {
         const formData = await request.formData()
         const patient_id = formData.get('patient_id')?.toString()
-        const appointmentDate = formData.get('new_appointment_date')?.toString()
-        const appointmentTime = formData.get('new_appointment_time')?.toString()
-        if(!patient_id || !appointmentDate || !appointmentTime) redirect(303, '/dbError');
+        const appointment_date = formData.get('date_iso_string')?.toString()
+        if(!patient_id || !appointment_date) redirect(303, '/dbError');
 
         const { error: dbErr } = await supabase
             .from('appointment')
             .insert({
                 patient_id: parseInt(patient_id),
-                appointment_date: getFullDateISOString(appointmentDate, appointmentTime),
+                appointment_date,
             })
 
         if(dbErr) {

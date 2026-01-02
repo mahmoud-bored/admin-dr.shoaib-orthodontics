@@ -10,7 +10,7 @@
 	import Form from "./Form.svelte";
 	import type { Database } from "$lib/database.types";
 	import type { Snippet } from "svelte";
-	import { formatDateForHTMLInputValue, formatTimeForHTMLInputValue } from "./jsAssets";
+	import { formatDateForHTMLInputValue, formatTimeForHTMLInputValue, getFullDateISOString } from "./jsAssets";
 
     type DbRow1 = Database['public']['Views']['patient_form_submissions']['Row'];
     type DbRow2 = Database['public']['Views']['patient_appointment']['Row'];
@@ -90,10 +90,49 @@
     const selectOptions = formControls.editPatientForm?.formSelect?.options
 
 
-    
     let isCollapsableOpen = $state(false)
-    let isEditFormOpen = $state({ value: false })
-    let isNewAppointmentFormOpen = $state({ value: false})
+    let isEditFormOpen = $state({ 
+        value: false,
+        data: {
+            default: {
+                appointment_time: "",
+                appointment_date: "",
+                dateIsoString: ""
+            },
+            rawDatePicker: {
+                appointment_time: formControls.editPatientForm?.rawDatePicker?.defaultValue ? formatTimeForHTMLInputValue(new Date(formControls.editPatientForm?.rawDatePicker?.defaultValue)) : "",
+                appointment_date: formControls.editPatientForm?.rawDatePicker?.defaultValue ? formatDateForHTMLInputValue(new Date(formControls.editPatientForm?.rawDatePicker?.defaultValue)) : "",
+                dateIsoString: formControls.editPatientForm?.rawDatePicker?.defaultValue ? 
+                    getFullDateISOString(
+                        formatDateForHTMLInputValue(new Date(formControls.editPatientForm?.rawDatePicker?.defaultValue)), 
+                        formatTimeForHTMLInputValue(new Date(formControls.editPatientForm?.rawDatePicker?.defaultValue))
+                    ) : ""
+            }
+        }
+    })
+    $effect(() => {
+        if(isEditFormOpen.data.default.appointment_date || isEditFormOpen.data.default.appointment_time) {
+            isEditFormOpen.data.default.dateIsoString = getFullDateISOString(isEditFormOpen.data.default.appointment_date!, isEditFormOpen.data.default.appointment_time!)
+        }
+    })
+    $effect(() => {
+        if(isEditFormOpen.data.rawDatePicker.appointment_date || isEditFormOpen.data.rawDatePicker.appointment_time) {
+            isEditFormOpen.data.rawDatePicker.dateIsoString = getFullDateISOString(isEditFormOpen.data.rawDatePicker.appointment_date!, isEditFormOpen.data.rawDatePicker.appointment_time!)
+        }
+    })
+    let isNewAppointmentFormOpen = $state({ 
+        value: false,
+        data: {
+            appointment_time: "",
+            appointment_date: "",
+            dateIsoString: ""
+        }
+    })
+    $effect(() => {
+        if(isNewAppointmentFormOpen.data.appointment_date || isNewAppointmentFormOpen.data.appointment_time) {
+            isNewAppointmentFormOpen.data.dateIsoString = getFullDateISOString(isNewAppointmentFormOpen.data.appointment_date!, isNewAppointmentFormOpen.data.appointment_time!)
+        }
+    })
     let isCancelAppointmentConfirmationOpen = $state({ value: false })
     let isDeleteRecordConfirmationOpen = $state({ value: false })
     let isArchiveRecordConfirmationOpen = $state({ value: false })
@@ -280,6 +319,7 @@
                     class:opacity-50={formControls.editPatientForm.formSelect?.disabled}
                     type="date" 
                     name="new_appointment_date" 
+                    bind:value={ isEditFormOpen.data.default.appointment_date }
                     disabled={formControls.editPatientForm.formSelect?.disabled}
                 />
                 <label for="new_appointment_time" class="w-full text-right text-orange-900 font-bold">موعد الحجز</label>
@@ -288,8 +328,10 @@
                     class:opacity-50={formControls.editPatientForm.formSelect?.disabled}
                     type="time" 
                     name="new_appointment_time" 
+                    bind:value={ isEditFormOpen.data.default.appointment_time }
                     disabled={formControls.editPatientForm.formSelect?.disabled}
                 />
+                <input type="hidden" name="date_iso_string" bind:value={ isEditFormOpen.data.default.dateIsoString } disabled={ formControls.editPatientForm.formSelect?.disabled }>
             </div>
         {/if}
         {#if formControls.editPatientForm.rawDatePicker}
@@ -299,14 +341,14 @@
             >
                 <label for="new_appointment_date" class="w-full text-right mt-2 text-orange-900 font-bold">تاريخ الحجز</label>
                 {#if formControls.editPatientForm.rawDatePicker.disabled}
-                    <input type="date" name="new_appointment_date" value="{ formatDateForHTMLInputValue(new Date(formControls.editPatientForm.rawDatePicker.defaultValue)) }" hidden />
-                    <input type="time" name="new_appointment_time" value="{ formatTimeForHTMLInputValue(new Date(formControls.editPatientForm.rawDatePicker.defaultValue)) }" hidden />
+                    <input type="date" name="new_appointment_date" bind:value="{ isEditFormOpen.data.rawDatePicker.appointment_date }" hidden />
+                    <input type="time" name="new_appointment_time" bind:value="{ isEditFormOpen.data.rawDatePicker.appointment_time }" hidden />
                 {/if}
                 <input 
                     class="bg-orange-100 w-9/10 p-2 rounded-md"
                     type="date" 
                     name="new_appointment_date" 
-                    value="{ new Date(formControls.editPatientForm.rawDatePicker.defaultValue).toISOString().split('T')[0] }"
+                    bind:value={ isEditFormOpen.data.rawDatePicker.appointment_date }
                     disabled={formControls.editPatientForm.rawDatePicker.disabled}
                     required
                 />
@@ -315,10 +357,11 @@
                     class="bg-orange-100 w-9/10 p-2 rounded-md" 
                     type="time" 
                     name="new_appointment_time" 
-                    value="{ new Date(formControls.editPatientForm?.rawDatePicker?.defaultValue).toTimeString().slice(0, 5) }"
+                    bind:value={ isEditFormOpen.data.rawDatePicker.appointment_time }
                     disabled={formControls.editPatientForm.rawDatePicker.disabled}
                     required
                 />
+                <input type="hidden" name="date_iso_string" bind:value={ isEditFormOpen.data.rawDatePicker.dateIsoString }>
             </div>
         {/if}
         {#if formControls.editPatientForm?.formCheckbox?.name}
@@ -455,13 +498,16 @@
                 class="bg-orange-100 w-9/10 p-2 rounded-md" 
                 type="date" 
                 name="new_appointment_date" 
+                bind:value={ isNewAppointmentFormOpen.data.appointment_date }
             />
             <label for="new_appointment_time" class="w-full text-right text-orange-900 font-bold">موعد الحجز</label>
             <input 
                 class="bg-orange-100 w-9/10 p-2 rounded-md" 
                 type="time" 
                 name="new_appointment_time" 
+                bind:value={ isNewAppointmentFormOpen.data.appointment_time }
             />
+            <input type="hidden" name="date_iso_string" bind:value={ isNewAppointmentFormOpen.data.dateIsoString }>
         </div>
     </Form>
 {/if}

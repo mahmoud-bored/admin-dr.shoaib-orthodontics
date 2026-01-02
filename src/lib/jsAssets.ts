@@ -105,8 +105,10 @@ export function getFullDateISOString(dateString: string, timeString: string): st
         } 
 }
 export function formatTimeForHTMLInputValue(dateString: Date) {
+    if(!dateString) return dateString
     return dateString.toTimeString().slice(0, 5)
 }
 export function formatDateForHTMLInputValue(dateString: Date) {
+    if(!dateString) return dateString
     return dateString.toISOString().split('T')[0]
 }
