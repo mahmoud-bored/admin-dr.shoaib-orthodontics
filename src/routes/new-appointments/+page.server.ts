@@ -2,18 +2,21 @@ import { supabase } from "$lib/supabaseClient";
 import { error } from "@sveltejs/kit";
 import type { Actions } from './$types';
 import { redirect } from "@sveltejs/kit";
-import { getFullDateISOString } from "$lib/jsAssets";
+import { ENV } from "$lib/env";
 
 
 
 
 export async function load() {
-    const { error: dbErr, data } = await supabase
+    let query = supabase
         .from('patient_form_submissions')
         .select('*')
         .eq('is_archived', false)
         .eq('is_deleted', false)
         .eq('long_term', false);
+    if(ENV === 'PROD') query = query.eq('is_test', false);
+    const { error: dbErr, data } = await query
+    
     if(dbErr) error(404);
     return {
         formSubmissions: data,

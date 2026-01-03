@@ -1,3 +1,4 @@
+import { ENV } from "$lib/env";
 import { supabase } from "$lib/supabaseClient";
 import { error } from "@sveltejs/kit";
 import { redirect } from "@sveltejs/kit";
@@ -7,13 +8,15 @@ import type { Actions } from "@sveltejs/kit";
 
 
 export async function load() {
-    const { error: dbErr, data } = await supabase
+    let query = supabase
         .from('patient_appointment')
         .select('*')
         .eq('long_term', false)
         .eq('is_archived', false)
         .eq('is_patient_deleted', false)
         .eq('is_appointment_deleted', false);
+    if(ENV === 'PROD') query = query.eq('is_test', false);
+    const { error: dbErr, data } = await query
 
     if(dbErr) error(404);
     return {
@@ -131,7 +134,8 @@ export const actions = {
         const { error: dbErr } = await supabase.rpc('new_patient_and_appointment', {
             new_full_name,
             new_phone_number,
-            new_appointment_date
+            new_appointment_date,
+            is_patient_test: ENV === "DEV" ? true : false
         })
         if(dbErr) {
             console.log(dbErr)

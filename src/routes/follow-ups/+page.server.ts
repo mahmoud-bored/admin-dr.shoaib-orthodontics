@@ -3,25 +3,30 @@ import { error } from "@sveltejs/kit";
 import { redirect } from "@sveltejs/kit";
 import { getFullDateISOString } from "$lib/jsAssets";
 import type { Actions } from "@sveltejs/kit";
+import { ENV } from "$lib/env";
 
 
 
 
 export async function load() {
-    const { error: dbErr, data: patientAppointmentsData } = await supabase
+    let patientAppointmentsQuery = supabase
         .from('patient_appointment')
         .select('*')
         .eq('is_archived', false)
         .eq('is_appointment_deleted', false)
         .eq('is_patient_deleted', false)
         .eq('long_term', true);
-
-    const { error: dbErr2, data: patientsData } = await supabase
+    if(ENV === 'PROD') patientAppointmentsQuery = patientAppointmentsQuery.eq('is_test', false);
+    const { error: dbErr, data: patientAppointmentsData } = await patientAppointmentsQuery
+    
+    let patientsQuery = supabase
         .from('patient')
         .select('*')
         .eq('is_archived', false)
         .eq('is_deleted', false)
         .eq('long_term', true);
+    if(ENV === 'PROD') patientsQuery = patientsQuery.eq('is_test', false);
+    const { error: dbErr2, data: patientsData } = await patientsQuery
 
     if(dbErr || dbErr2) error(404);
     return {
@@ -238,7 +243,8 @@ export const actions = {
             .insert({
                 full_name,
                 phone_number,
-                long_term: true
+                long_term: true,
+                is_test: ENV === 'DEV' ? true : false,
             })
 
         if(dbErr) {
