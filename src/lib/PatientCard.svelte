@@ -10,7 +10,7 @@
 	import Form from "./Form.svelte";
 	import type { Database } from "$lib/database.types";
 	import type { Snippet } from "svelte";
-	import { formatDateForHTMLInputValue, formatTimeForHTMLInputValue, getFullDateISOString } from "./jsAssets";
+	import { formatDateForHTMLInputValue, formatTimeForHTMLInputValue, getFullDateISOString, getPhoneCallLink, getWhatsappPhoneLink } from "./jsAssets";
 
     type DbRow1 = Database['public']['Views']['patient_form_submissions']['Row'];
     type DbRow2 = Database['public']['Views']['patient_appointment']['Row'];
@@ -569,7 +569,7 @@
 >
     <div class="p-3 w-full flex justify-around md:justify-start items-center gap-3 md:gap-6 md:pl-9">
         <a 
-            href="https://api.whatsapp.com/send?phone={patientData.phone_number}" 
+            href="{getWhatsappPhoneLink(patientData.phone_number!)}" 
             target="_blank" 
             class="flex justify-center h-14 w-14"
         >
@@ -578,7 +578,7 @@
             </button>
         </a>
         <a 
-            href="tel:{patientData.phone_number}"
+            href="{getPhoneCallLink(patientData.phone_number!)}"
             target="_blank" 
             class="flex justify-center h-15 w-15"
         >

@@ -113,10 +113,11 @@ export function formatDateForHTMLInputValue(dateString: Date) {
     return dateString.toISOString().split('T')[0]
 }
 export function getWhatsappPhoneLink(internationalPhoneNumber: string) {
-    if(internationalPhoneNumber) return `https://api.whatsapp.com/send?phone=${internationalPhoneNumber}`
-        else return ""
+    if(!internationalPhoneNumber) return ""
+    // Remove the "+" Character in the number before constructing the link 
+    return `https://api.whatsapp.com/send?phone=${internationalPhoneNumber.slice(1)}`
 }
 export function getPhoneCallLink(internationalPhoneNumber: string) {
-    if(internationalPhoneNumber) return `tel:${internationalPhoneNumber}`
-        else return ""
+    if(!internationalPhoneNumber) return ""
+    return `tel:${internationalPhoneNumber}`
 }
