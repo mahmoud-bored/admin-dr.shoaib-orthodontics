@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Database } from "$lib/database.types";
 	import Form from "$lib/Form.svelte";
-	import { formatDateForHTMLInputValue, formatTime, formatTimeForHTMLInputValue, getFullDateISOString } from "$lib/jsAssets";
+	import { formatDateForHTMLInputValue, formatTime, formatTimeForHTMLInputValue, getFullDateISOString, getPhoneCallLink, getWhatsappPhoneLink } from "$lib/jsAssets";
 	import Scroll from "phosphor-svelte/lib/Scroll";
     import Plus from "phosphor-svelte/lib/Plus";
 	import Phone from "phosphor-svelte/lib/Phone";
