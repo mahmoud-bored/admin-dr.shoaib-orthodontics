@@ -4,6 +4,8 @@
 	import { formatDateForHTMLInputValue, formatTime, formatTimeForHTMLInputValue, getFullDateISOString } from "$lib/jsAssets";
 	import Scroll from "phosphor-svelte/lib/Scroll";
     import Plus from "phosphor-svelte/lib/Plus";
+	import Phone from "phosphor-svelte/lib/Phone";
+	import WhatsappLogo from "phosphor-svelte/lib/WhatsappLogo";
 
     type DbRow = Database['public']['Views']['patient_appointment']['Row'];
     let { 
@@ -173,13 +175,35 @@
             formAction: "?/editAppointment"
         }}
     >
-        <div class="w-full p-3 bg-orange-300 rounded-md flex flex-col items-baseline justify-center">
-            <p class="text-orange-950 font-bold text-lg text-left">
-                { appointmentData.full_name }
-            </p>
-            <p class="text-orange-800 font-bold text-sm text-left pl-1">
-                { appointmentData.phone_number }
-            </p>
+        <div class="w-full p-3 bg-orange-300 rounded-md flex justify-between items-center">
+            <div class="flex flex-col justify-center items-baseline">
+                <p class="text-orange-950 font-bold text-lg text-left">
+                    { appointmentData.full_name }
+                </p>
+                <p class="text-orange-800 font-bold text-sm text-left pl-1">
+                    { appointmentData.phone_number }
+                </p>
+            </div>
+            <div class="flex items-center justify-end gap-2 opacity-90">
+                <a 
+                    href={getWhatsappPhoneLink(appointmentData.phone_number!)}
+                    target="_blank" 
+                    class="flex justify-center h-11 w-11"
+                >
+                    <button type="button" class="bg-[#25a83f] shadow-sm p-1.5 h-full w-full rounded-full cursor-pointer hover:bg-[#238938] transition flex justify-center items-center" >
+                        <WhatsappLogo size={26} weight="regular" class="text-orange-50" />
+                    </button>
+                </a>
+                <a 
+                    href={getPhoneCallLink(appointmentData.phone_number!)}
+                    target="_blank" 
+                    class="flex justify-center h-11 w-11"
+                >
+                    <button type="button" class="bg-blue-600 shadow-sm p-1.5 h-full w-full rounded-full cursor-pointer hover:bg-blue-700 transition flex justify-center items-center" >
+                        <Phone size={24} weight="regular" class="text-orange-50" />
+                    </button>
+                </a>
+            </div>
         </div>
         
         <div class="h-45 overflow-hidden transition-all flex flex-col gap-2 justify-center items-center w-full pb-2 has-[input:disabled]:opacity-60">
