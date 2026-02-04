@@ -29,8 +29,8 @@
 	},
 	"dependencies": {
 		"@supabase/supabase-js": "^2.86.0",
-		"bits-ui": "^2.14.4",
-		"phosphor-svelte": "^3.0.1",
+		"bits-ui": "^2.15.5",
+		"phosphor-svelte": "^3.1.0",
 		"supabase": "^2.65.6",
 		"svelte-tel-input": "^3.6.1",
 		"tailwindcss-animate": "^1.0.7"
