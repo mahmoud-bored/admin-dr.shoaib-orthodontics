@@ -15,13 +15,13 @@
                 value="past"
                 class="data-[state=active]:shadow-mini dark:data-[state=active]:bg-muted h-10 rounded-[7px] py-2 bg-orange-100 data-[state=active]:bg-orange-200 hover:bg-orange-200 transition cursor-pointer"
             >
-                المواعيد السابقة
+                الأيام السابقة
             </Tabs.Trigger>
             <Tabs.Trigger
                 value="present"
                 class="data-[state=active]:shadow-mini dark:data-[state=active]:bg-muted h-10 rounded-[7px] py-2 bg-orange-100 data-[state=active]:bg-orange-200 hover:bg-orange-200 transition cursor-pointer"
             >
-                الرئيسية
+                الأيام التالية
             </Tabs.Trigger>
         </Tabs.List>
         <Tabs.Content value="past" class="select-none pt-3">
